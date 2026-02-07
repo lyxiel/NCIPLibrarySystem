@@ -7,7 +7,7 @@ import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import BookModal from '@/components/BookModal'
 import { mockBooks } from '@/lib/mockData'
-import { Plus, Search, Edit, Trash2, Grid3x3, List } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Grid3x3, List, BookOpen } from 'lucide-react'
 
 export default function BooksPage() {
   const router = useRouter()

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
 import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
-import { Plus, Search, Edit, Trash2 } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Lock, CheckCircle, AlertCircle } from 'lucide-react'
 
 export default function IKSPCLPage() {
   const router = useRouter()
@@ -24,6 +24,8 @@ export default function IKSPCLPage() {
       lastUpdated: '2024-03-15',
       subject: 'Traditional Arts, Crafts',
       remarks: 'Well-preserved document',
+      sensitivity: 'Public',
+      fpicRequired: false,
     },
     {
       id: 2,
@@ -39,6 +41,8 @@ export default function IKSPCLPage() {
       lastUpdated: '2024-02-28',
       subject: 'Spiritual Practices, Rituals',
       remarks: 'Digital copy available',
+      sensitivity: 'Sacred',
+      fpicRequired: true,
     },
     {
       id: 3,
@@ -54,6 +58,8 @@ export default function IKSPCLPage() {
       lastUpdated: '2024-01-20',
       subject: 'Agriculture, Traditional Methods',
       remarks: 'Recently digitized',
+      sensitivity: 'Public',
+      fpicRequired: false,
     },
     {
       id: 4,
@@ -69,6 +75,8 @@ export default function IKSPCLPage() {
       lastUpdated: '2024-02-10',
       subject: 'Medicinal Plants, Traditional Medicine',
       remarks: 'Requires preservation',
+      sensitivity: 'Restricted',
+      fpicRequired: true,
     },
     {
       id: 5,
@@ -84,6 +92,8 @@ export default function IKSPCLPage() {
       lastUpdated: '2024-03-01',
       subject: 'Oral Traditions, Cultural Heritage',
       remarks: 'Complete collection',
+      sensitivity: 'Public',
+      fpicRequired: false,
     },
   ])
 
