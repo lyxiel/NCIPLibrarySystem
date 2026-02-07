@@ -96,14 +96,14 @@ export default function BooksPage() {
         <div className="flex gap-2">
           <button
             onClick={() => handleEditBook(book)}
-            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+            className="p-2 text-blue-500 hover:bg-blue-50 hover:shadow-md hover:scale-125 rounded-lg transition-all duration-300 transform"
             title="Edit book"
           >
             <Edit size={18} />
           </button>
           <button
             onClick={() => handleDeleteBook(book.id)}
-            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-2 text-red-500 hover:bg-red-50 hover:shadow-md hover:scale-125 rounded-lg transition-all duration-300 transform"
             title="Delete book"
           >
             <Trash2 size={18} />
@@ -126,7 +126,7 @@ export default function BooksPage() {
               setEditingBook(null)
               setIsModalOpen(true)
             }}
-            className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-secondary transition-colors font-semibold"
+            className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
           >
             <Plus size={20} />
             Add Book

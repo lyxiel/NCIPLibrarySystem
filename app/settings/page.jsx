@@ -36,6 +36,8 @@ export default function SettingsPage() {
     profileImage: null,
   })
 
+  const [theme, setTheme] = useState('light')
+
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn')
     if (!isLoggedIn) {
@@ -46,6 +48,9 @@ export default function SettingsPage() {
     if (savedSettings) {
       setSettings(JSON.parse(savedSettings))
     }
+    const t = localStorage.getItem('theme') || 'light'
+    setTheme(t)
+    setSettings((prev) => ({ ...prev, darkMode: t === 'navy' }))
   }, [router])
 
   const handleInputChange = (key, value) => {
@@ -139,7 +144,7 @@ export default function SettingsPage() {
                   {settings.profileImage && (
                     <button
                       onClick={handleRemoveImage}
-                      className="absolute -top-2 -right-2 bg-destructive text-white p-1 rounded-full hover:bg-destructive/90 transition-colors"
+                      className="absolute -top-2 -right-2 bg-destructive text-white p-1 rounded-full hover:bg-destructive/90 hover:shadow-lg hover:scale-110 transition-all duration-300 transform"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -267,10 +272,20 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-4 p-3 border border-border rounded-lg bg-background">
                     <Moon className="w-4 h-4 text-muted-foreground" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Dark Mode</p>
-                      <p className="text-xs text-muted-foreground">Coming soon</p>
+                      <p className="text-sm font-medium">Navy Theme</p>
+                      <p className="text-xs text-muted-foreground">Use NCIP navy government theme</p>
                     </div>
-                    <Switch disabled checked={settings.darkMode} />
+                    <Switch
+                      checked={theme === 'navy'}
+                      onCheckedChange={(val) => {
+                        const newTheme = val ? 'navy' : 'light'
+                        setTheme(newTheme)
+                        localStorage.setItem('theme', newTheme)
+                        if (newTheme === 'navy') document.documentElement.classList.add('dark')
+                        else document.documentElement.classList.remove('dark')
+                        handleInputChange('darkMode', val)
+                      }}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">

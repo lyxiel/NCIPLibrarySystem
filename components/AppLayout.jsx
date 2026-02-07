@@ -1,15 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 
 const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [theme, setTheme] = useState('light')
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen)
   }
+
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem('theme') || 'light'
+      setTheme(t)
+      if (t === 'navy') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [])
 
   return (
     <div className="flex h-screen bg-background">

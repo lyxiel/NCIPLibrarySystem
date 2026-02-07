@@ -35,9 +35,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-sidebar text-sidebar-foreground flex-col border-r border-sidebar-border z-40">
         {/* Logo Section */}
-        <div className="p-6 border-b border-sidebar-border">
-          <h1 className="text-xl font-bold">NCIP</h1>
-          <p className="text-sm text-sidebar-foreground/70">Library System</p>
+        <div className="p-6 border-b border-sidebar-border flex items-center gap-3">
+          <img src="/oppr.svg" alt="OPPR - NCIP" className="w-16 h-16 object-contain rounded-md" />
+          <div>
+            <h1 className="text-lg font-bold">NCIP</h1>
+            <p className="text-xs text-sidebar-foreground/70">Office of Policy, Planning & Research</p>
+          </div>
         </div>
 
         {/* Navigation Menu */}
@@ -49,10 +52,10 @@ const Sidebar = ({ isOpen, onClose }) => {
             return (
               <Link key={item.href} href={item.href}>
                 <button
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 transform ${
                     active
-                      ? 'bg-sidebar-accent text-white font-semibold'
-                      : 'text-sidebar-foreground hover:bg-sidebar-primary/10'
+                      ? 'bg-sidebar-accent text-white font-semibold shadow-lg'
+                      : 'text-sidebar-foreground hover:bg-gold-accent hover:text-dark-navy hover:shadow-md hover:translate-x-1'
                   }`}
                 >
                   <Icon size={20} />
@@ -65,7 +68,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="border-t border-sidebar-border p-4 space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-primary/10 transition-colors">
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-gold-accent hover:text-dark-navy hover:shadow-md hover:translate-x-1 transition-all duration-300 transform">
             <LogOut size={20} />
             <span>Logout</span>
           </button>
@@ -98,10 +101,10 @@ const Sidebar = ({ isOpen, onClose }) => {
             return (
               <Link key={item.href} href={item.href} onClick={onClose}>
                 <button
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 transform ${
                     active
-                      ? 'bg-sidebar-accent text-white font-semibold'
-                      : 'text-sidebar-foreground hover:bg-sidebar-primary/10'
+                      ? 'bg-sidebar-accent text-white font-semibold shadow-lg'
+                      : 'text-sidebar-foreground hover:bg-gold-accent hover:text-dark-navy hover:shadow-md hover:translate-x-1'
                   }`}
                 >
                   <Icon size={20} />
@@ -114,7 +117,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="border-t border-sidebar-border p-4 space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-primary/10 transition-colors">
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-gold-accent hover:text-dark-navy hover:shadow-md hover:translate-x-1 transition-all duration-300 transform">
             <LogOut size={20} />
             <span>Logout</span>
           </button>

@@ -10,27 +10,65 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [remember, setRemember] = useState(false)
+
+  const mockUsers = [
+    { role: 'admin', email: 'admin@ncip.gov.ph', password: 'admin123' },
+    { role: 'librarian', email: 'librarian@ncip.gov.ph', password: 'lib123' },
+    { role: 'staff', email: 'staff@ncip.gov.ph', password: 'staff123' },
+  ]
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
-    // Mock authentication
-    if (email && password) {
-      localStorage.setItem('isLoggedIn', 'true')
-      router.push('/dashboard')
-    } else {
+    setError('')
+    if (!email || !password) {
       setError('Please enter email and password')
+      return
     }
+
+    setLoading(true)
+    // simulate async auth
+    setTimeout(() => {
+      const user = mockUsers.find((u) => u.email === email && u.password === password)
+      if (user) {
+        localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('userRole', user.role)
+        if (remember) localStorage.setItem('rememberEmail', email)
+        router.push('/dashboard')
+      } else {
+        setError('Invalid credentials — try mock users below')
+      }
+      setLoading(false)
+    }, 900)
+  }
+
+  const autofillUser = (u) => {
+    setEmail(u.email)
+    setPassword(u.password)
+    setError('')
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-secondary flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[hsl(var(--primary))] bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent-blue))] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2\">NCIP</h1>
-          <p className="text-blue-100 text-sm md:text-base\">Library Management System</p>
-          <p className="text-blue-100 text-xs md:text-sm mt-2\">National Commission on Indigenous Peoples</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">NCIP</h1>
+          <p className="text-[rgba(255,255,255,0.9)] text-sm md:text-base">Library Management System</p>
+          <p className="text-[rgba(255,255,255,0.85)] text-xs md:text-sm mt-2">National Commission on Indigenous Peoples</p>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <small className="text-xs text-[rgba(255,255,255,0.8)]">Quick mock users:</small>
+            {mockUsers.map((u) => (
+              <button
+                key={u.role}
+                onClick={() => autofillUser(u)}
+                className="text-xs bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-md transition"
+              >
+                {u.role}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Login Form Card */}
@@ -87,10 +125,15 @@ export default function LoginPage() {
             {/* Remember Me */}
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 text-foreground cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-border" />
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="w-4 h-4 rounded border-border"
+                />
                 Remember me
               </label>
-              <a href="#" className="text-primary hover:underline">
+              <a href="#" className="text-gold-accent hover:underline">
                 Forgot password?
               </a>
             </div>
@@ -98,9 +141,10 @@ export default function LoginPage() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-semibold hover:bg-secondary transition-colors mt-6"
+              disabled={loading}
+              className={`w-full bg-primary text-white py-2.5 rounded-lg font-semibold hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform active:scale-95 mt-6 ${loading ? 'opacity-70 cursor-wait' : ''}`}
             >
-              Sign In
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 

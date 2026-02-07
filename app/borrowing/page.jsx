@@ -106,7 +106,7 @@ export default function BorrowingPage() {
         {borrowing.status === 'Active' && (
           <button
             onClick={() => handleReturnBook(borrowing.id)}
-            className="p-2 text-green-500 hover:bg-green-50 rounded-lg transition-colors"
+            className="p-2 text-green-500 hover:bg-green-50 hover:shadow-md hover:scale-125 rounded-lg transition-all duration-300 transform"
             title="Return book"
           >
             <RotateCw size={18} />
@@ -126,7 +126,7 @@ export default function BorrowingPage() {
           </div>
           <button
             onClick={() => setIsBorrowModalOpen(true)}
-            className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-secondary transition-colors font-semibold"
+            className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
           >
             <Plus size={20} />
             Borrow Book
