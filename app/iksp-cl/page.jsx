@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
 import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
+import MaterialModal from '@/components/MaterialModal'
 import { Plus, Search, Edit, Trash2, Lock, CheckCircle, AlertCircle } from 'lucide-react'
 
 export default function IKSPCLPage() {
   const router = useRouter()
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingMaterial, setEditingMaterial] = useState(null)
   const [materials, setMaterials] = useState([
     {
       id: 1,
@@ -119,12 +122,27 @@ export default function IKSPCLPage() {
     return matchesSearch && matchesType
   })
 
-  const handleAddMaterial = () => {
-    // Add material logic
+  const handleAddMaterial = (formData) => {
+    if (editingMaterial) {
+      setMaterials(
+        materials.map((material) =>
+          material.id === editingMaterial.id ? { ...formData, id: editingMaterial.id } : material
+        )
+      )
+      setEditingMaterial(null)
+    } else {
+      const newMaterial = {
+        ...formData,
+        id: Math.max(...materials.map((m) => m.id), 0) + 1,
+      }
+      setMaterials([...materials, newMaterial])
+    }
+    setIsModalOpen(false)
   }
 
   const handleEditMaterial = (material) => {
-    // Edit material logic
+    setEditingMaterial(material)
+    setIsModalOpen(true)
   }
 
   const handleDeleteMaterial = (materialId) => {
@@ -134,16 +152,13 @@ export default function IKSPCLPage() {
   }
 
   const columns = [
-    { key: 'codeNumber', label: 'Code Number', width: '8%' },
-    { key: 'region', label: 'Region', width: '8%' },
-    { key: 'province', label: 'Province', width: '10%' },
-    { key: 'municipality', label: 'Municipality', width: '10%' },
-    { key: 'barangay', label: 'Barangay', width: '10%' },
+    { key: 'codeNumber', label: 'Code Number', width: '7%' },
+    { key: 'title', label: 'Title', width: '13%' },
     { key: 'group', label: 'Group', width: '8%' },
-    { key: 'title', label: 'Title', width: '12%' },
     { key: 'type', label: 'Type', width: '8%' },
-    { key: 'copies', label: 'Number of Copies', width: '8%' },
-    { key: 'lastUpdated', label: 'Last Updated/Published', width: '10%' },
+    { key: 'copies', label: 'Copies', width: '6%' },
+    { key: 'sensitivity', label: 'Sensitivity', width: '9%' },
+    { key: 'fpic', label: 'FPIC', width: '6%' },
     { key: 'subject', label: 'Subject', width: '12%' },
     { key: 'remarks', label: 'Remarks', width: '10%' },
     { key: 'actions', label: 'Actions', width: '8%' },
@@ -152,15 +167,23 @@ export default function IKSPCLPage() {
   const renderRow = (material) => (
     <>
       <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{material.codeNumber}</td>
-      <td className="px-6 py-4 text-sm text-muted-foreground">{material.region}</td>
-      <td className="px-6 py-4 text-sm text-muted-foreground">{material.province}</td>
-      <td className="px-6 py-4 text-sm text-muted-foreground">{material.municipality}</td>
-      <td className="px-6 py-4 text-sm text-muted-foreground">{material.barangay}</td>
-      <td className="px-6 py-4 text-sm text-muted-foreground">{material.group}</td>
       <td className="px-6 py-4 text-sm text-foreground font-medium">{material.title}</td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">{material.group}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{material.type}</td>
       <td className="px-6 py-4 text-sm text-foreground font-medium text-center">{material.copies}</td>
-      <td className="px-6 py-4 text-sm text-muted-foreground">{material.lastUpdated}</td>
+      <td className="px-6 py-4 text-sm">
+        <StatusBadge status={material.sensitivity} />
+      </td>
+      <td className="px-6 py-4 text-sm text-center">
+        {material.fpicRequired ? (
+          <div className="inline-flex items-center gap-1 px-2 py-1 rounded badge-restricted">
+            <Lock size={14} />
+            <span>Required</span>
+          </div>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{material.subject}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{material.remarks}</td>
       <td className="px-6 py-4 text-sm">
@@ -193,7 +216,10 @@ export default function IKSPCLPage() {
             <p className="text-muted-foreground">Indigenous Knowledge and Skills Portfolio / Cultural Library</p>
           </div>
           <button
-            onClick={handleAddMaterial}
+            onClick={() => {
+              setEditingMaterial(null)
+              setIsModalOpen(true)
+            }}
             className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
           >
             <Plus size={20} />
@@ -229,6 +255,17 @@ export default function IKSPCLPage() {
 
         {/* Materials Table */}
         <Table columns={columns} data={filteredMaterials} renderRow={renderRow} />
+
+        {/* Material Modal */}
+        <MaterialModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setEditingMaterial(null)
+          }}
+          onSubmit={handleAddMaterial}
+          initialData={editingMaterial}
+        />
       </div>
     </AppLayout>
   )
