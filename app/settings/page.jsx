@@ -11,6 +11,8 @@ import {
   Moon,
   Globe,
   Save,
+  Upload,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,6 +33,7 @@ export default function SettingsPage() {
     emailNotifications: true,
     darkMode: false,
     language: 'English',
+    profileImage: null,
   })
 
   useEffect(() => {
@@ -51,6 +54,21 @@ export default function SettingsPage() {
       [key]: value,
     }))
     setIsSaved(false)
+  }
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        handleInputChange('profileImage', event.target?.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    handleInputChange('profileImage', null)
   }
 
   const handleSaveSettings = () => {
@@ -108,6 +126,48 @@ export default function SettingsPage() {
               <CardDescription>Update your personal information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Profile Picture Section */}
+              <div className="flex flex-col items-center sm:items-start gap-4">
+                <div className="relative">
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border-2 border-primary/20 overflow-hidden">
+                    {settings.profileImage ? (
+                      <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-16 h-16 text-muted-foreground" />
+                    )}
+                  </div>
+                  {settings.profileImage && (
+                    <button
+                      onClick={handleRemoveImage}
+                      className="absolute -top-2 -right-2 bg-destructive text-white p-1 rounded-full hover:bg-destructive/90 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="imageUpload" className="cursor-pointer">
+                    <Button asChild variant="outline" className="cursor-pointer">
+                      <span>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Photo
+                      </span>
+                    </Button>
+                  </label>
+                  <input
+                    id="imageUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <p className="text-xs text-muted-foreground">JPG, PNG or GIF (max 5MB)</p>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-border"></div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full Name</Label>
