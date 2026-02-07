@@ -116,9 +116,9 @@ export default function BooksPage() {
   return (
     <AppLayout>
       <div>
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Library Materials</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Library Materials</h1>
             <p className="text-muted-foreground">Manage library book collection</p>
           </div>
           <button
@@ -126,7 +126,7 @@ export default function BooksPage() {
               setEditingBook(null)
               setIsModalOpen(true)
             }}
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-secondary transition-colors font-semibold"
+            className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-secondary transition-colors font-semibold"
           >
             <Plus size={20} />
             Add Book

@@ -21,7 +21,7 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Dashboard</h1>
         <p className="text-muted-foreground mb-8">Overview of library operations and statistics</p>
 
         {/* Stats Cards Grid */}

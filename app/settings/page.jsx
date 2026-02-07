@@ -89,7 +89,7 @@ export default function SettingsPage() {
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Settings</h1>
           <p className="text-muted-foreground">Manage your account preferences and system settings</p>
         </div>
 

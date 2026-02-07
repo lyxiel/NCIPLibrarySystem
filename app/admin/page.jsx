@@ -57,7 +57,7 @@ export default function AdminPanel() {
     <AppLayout>
       <div>
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Admin Panel</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Admin Panel</h1>
           <p className="text-muted-foreground">Manage library system settings and configuration</p>
         </div>
 

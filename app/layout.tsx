@@ -8,6 +8,9 @@ export const metadata = {
   title: 'NCIP Library Management System',
   description: 'National Commission on Indigenous Peoples Library Management System',
   generator: 'v0.app',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({

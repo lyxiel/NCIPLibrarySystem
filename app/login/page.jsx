@@ -28,9 +28,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">NCIP</h1>
-          <p className="text-blue-100">Library Management System</p>
-          <p className="text-blue-100 text-sm mt-2">National Commission on Indigenous Peoples</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2\">NCIP</h1>
+          <p className="text-blue-100 text-sm md:text-base\">Library Management System</p>
+          <p className="text-blue-100 text-xs md:text-sm mt-2\">National Commission on Indigenous Peoples</p>
         </div>
 
         {/* Login Form Card */}
