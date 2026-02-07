@@ -28,7 +28,8 @@ export default function BooksPage() {
     const matchesSearch =
       book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.isbn.toLowerCase().includes(searchTerm.toLowerCase())
+      book.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.publisher.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus = !filterStatus || book.status === filterStatus
 
@@ -66,25 +67,31 @@ export default function BooksPage() {
   }
 
   const columns = [
-    { key: 'title', label: 'Title', width: '25%' },
-    { key: 'author', label: 'Author', width: '15%' },
-    { key: 'isbn', label: 'ISBN', width: '15%' },
-    { key: 'category', label: 'Category', width: '12%' },
-    { key: 'status', label: 'Status', width: '12%' },
-    { key: 'copies', label: 'Copies', width: '8%' },
-    { key: 'actions', label: 'Actions', width: '13%' },
+    { key: 'code', label: 'CODE', width: '12%' },
+    { key: 'resourceType', label: 'Resource Type', width: '10%' },
+    { key: 'title', label: 'Title', width: '18%' },
+    { key: 'author', label: 'Author', width: '12%' },
+    { key: 'publisher', label: 'Publisher', width: '12%' },
+    { key: 'subject', label: 'Subject', width: '12%' },
+    { key: 'datePublished', label: 'Date Published', width: '10%' },
+    { key: 'copies', label: 'Number of Copies', width: '8%' },
+    { key: 'status', label: 'Availability', width: '10%' },
+    { key: 'actions', label: 'Actions', width: '8%' },
   ]
 
   const renderRow = (book) => (
     <>
+      <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{book.code}</td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">{book.resourceType}</td>
       <td className="px-6 py-4 text-sm text-foreground font-medium">{book.title}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.author}</td>
-      <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{book.isbn}</td>
-      <td className="px-6 py-4 text-sm text-muted-foreground">{book.category}</td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">{book.publisher}</td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">{book.subject}</td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">{book.datePublished}</td>
+      <td className="px-6 py-4 text-sm text-foreground font-medium text-center">{book.copies}</td>
       <td className="px-6 py-4 text-sm">
         <StatusBadge status={book.status} />
       </td>
-      <td className="px-6 py-4 text-sm text-foreground font-medium">{book.copies}</td>
       <td className="px-6 py-4 text-sm">
         <div className="flex gap-2">
           <button
@@ -132,7 +139,7 @@ export default function BooksPage() {
             <Search className="absolute left-3 top-3 text-muted-foreground" size={20} />
             <input
               type="text"
-              placeholder="Search by title, author, or ISBN..."
+              placeholder="Search by title, author, code, or publisher..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
