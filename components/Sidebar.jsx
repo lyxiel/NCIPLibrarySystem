@@ -19,7 +19,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Book Catalog', href: '/books', icon: BookOpen },
+    { label: 'Library Materials', href: '/books', icon: BookOpen },
     { label: 'Borrowing', href: '/borrowing', icon: BookOpen },
     { label: 'Members', href: '/members', icon: Users },
     { label: 'Indigenous Archive', href: '/archive', icon: Archive },

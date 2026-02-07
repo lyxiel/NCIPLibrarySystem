@@ -118,7 +118,7 @@ export default function BooksPage() {
       <div>
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Book Catalog</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Library Materials</h1>
             <p className="text-muted-foreground">Manage library book collection</p>
           </div>
           <button
