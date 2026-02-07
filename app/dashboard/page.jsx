@@ -38,13 +38,13 @@ export default function DashboardPage() {
     <AppLayout>
       <div className="space-y-8">
         {/* Header Section with Gradient */}
-        <div className="gradient-navy-header text-white rounded-lg p-8 shadow-lg-navy">
+        <div className="gradient-navy-header rounded-lg p-8 shadow-lg-navy">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">Library Operations Dashboard</h1>
-              <p className="text-blue-100">Real-time statistics and activity overview</p>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2 text-black">Library Operations Dashboard</h1>
+              <p className="text-black text-opacity-70">Real-time statistics and activity overview</p>
             </div>
-            <TrendingUp size={48} className="opacity-20" />
+            <TrendingUp size={48} className="text-black opacity-30" />
           </div>
         </div>
 
