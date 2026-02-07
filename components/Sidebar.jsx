@@ -24,6 +24,7 @@ const Sidebar = () => {
     { label: 'Members', href: '/members', icon: Users },
     { label: 'Indigenous Archive', href: '/archive', icon: Archive },
     { label: 'Reports', href: '/reports', icon: BarChart3 },
+    { label: 'Settings', href: '/settings', icon: Settings },
     { label: 'Admin Panel', href: '/admin', icon: Settings },
   ]
 
