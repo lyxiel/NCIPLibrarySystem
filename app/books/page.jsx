@@ -7,7 +7,7 @@ import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import BookModal from '@/components/BookModal'
 import { mockBooks } from '@/lib/mockData'
-import { Plus, Search, Edit, Trash2 } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Grid3x3, List } from 'lucide-react'
 
 export default function BooksPage() {
   const router = useRouter()
@@ -16,6 +16,7 @@ export default function BooksPage() {
   const [filterStatus, setFilterStatus] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingBook, setEditingBook] = useState(null)
+  const [viewMode, setViewMode] = useState('table') // 'table' or 'grid'
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn') 
@@ -115,11 +116,12 @@ export default function BooksPage() {
 
   return (
     <AppLayout>
-      <div>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <div className="space-y-6">
+        {/* Header with Title and Action Button */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Library Materials</h1>
-            <p className="text-muted-foreground">Manage library book collection</p>
+            <p className="text-muted-foreground">Manage library book collection • {filteredBooks.length} items</p>
           </div>
           <button
             onClick={() => {
@@ -133,32 +135,122 @@ export default function BooksPage() {
           </button>
         </div>
 
-        {/* Search and Filter */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 text-muted-foreground" size={20} />
-            <input
-              type="text"
-              placeholder="Search by title, author, code, or publisher..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-            />
+        {/* Search and Filter Bar */}
+        <div className="card-soft">
+          <div className="flex flex-col gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-3 text-muted-foreground" size={20} />
+              <input
+                type="text"
+                placeholder="Search by title, author, code, or publisher..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
+              />
+            </div>
+            <div className="flex flex-col md:flex-row gap-3">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
+              >
+                <option value="">All Status</option>
+                <option value="Available">Available</option>
+                <option value="Borrowed">Borrowed</option>
+                <option value="Reserved">Reserved</option>
+              </select>
+              
+              {/* View Toggle */}
+              <div className="flex gap-2 ml-auto">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-2.5 rounded-lg transition-smooth ${
+                    viewMode === 'table'
+                      ? 'bg-primary text-white'
+                      : 'bg-background border border-border text-foreground hover:bg-accent'
+                  }`}
+                  title="Table view"
+                >
+                  <List size={20} />
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2.5 rounded-lg transition-smooth ${
+                    viewMode === 'grid'
+                      ? 'bg-primary text-white'
+                      : 'bg-background border border-border text-foreground hover:bg-accent'
+                  }`}
+                  title="Grid view"
+                >
+                  <Grid3x3 size={20} />
+                </button>
+              </div>
+            </div>
           </div>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-          >
-            <option value="">All Status</option>
-            <option value="Available">Available</option>
-            <option value="Borrowed">Borrowed</option>
-            <option value="Reserved">Reserved</option>
-          </select>
         </div>
 
-        {/* Books Table */}
-        <Table columns={columns} data={filteredBooks} renderRow={renderRow} />
+        {/* Content Area */}
+        {viewMode === 'table' ? (
+          <Table columns={columns} data={filteredBooks} renderRow={renderRow} />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredBooks.map((book) => (
+              <div
+                key={book.id}
+                className="card-elevated group overflow-hidden flex flex-col h-full"
+              >
+                {/* Book Cover Placeholder */}
+                <div className="w-full h-40 bg-gradient-to-br from-primary to-accent-blue rounded-lg mb-4 flex items-center justify-center">
+                  <BookOpen size={48} className="text-white opacity-50" />
+                </div>
+
+                {/* Book Info */}
+                <div className="flex-1 flex flex-col">
+                  <p className="text-xs font-mono text-muted-foreground mb-2">{book.code}</p>
+                  <h3 className="font-bold text-foreground line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                    {book.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-3">{book.author}</p>
+
+                  <div className="flex gap-2 mb-4 flex-wrap">
+                    <StatusBadge status={book.status} />
+                    <span className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                      {book.copies} copies
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground mb-4">{book.publisher}</p>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="flex gap-2 pt-4 border-t border-border">
+                  <button
+                    onClick={() => handleEditBook(book)}
+                    className="flex-1 py-2 px-3 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium text-sm transition-smooth flex items-center justify-center gap-1"
+                    title="Edit"
+                  >
+                    <Edit size={16} />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBook(book.id)}
+                    className="flex-1 py-2 px-3 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-medium text-sm transition-smooth flex items-center justify-center gap-1"
+                    title="Delete"
+                  >
+                    <Trash2 size={16} />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {filteredBooks.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">No books found matching your criteria</p>
+          </div>
+        )}
 
         {/* Book Modal */}
         <BookModal
