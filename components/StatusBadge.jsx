@@ -1,22 +1,21 @@
 const StatusBadge = ({ status }) => {
   const statusStyles = {
-    Available: 'badge-available',
-    Borrowed: 'badge-borrowed',
-    Reserved: 'badge-restricted',
-    Restricted: 'badge-restricted',
-    Returned: 'badge-available',
-    Active: 'badge-available',
-    Inactive: 'bg-gray-50 text-gray-700 border border-gray-300',
-    Published: 'badge-available',
-    Draft: 'bg-yellow-50 text-yellow-700 border border-yellow-300',
-    IKSP: 'badge-iksp',
-    CL: 'badge-cl',
-    Public: 'badge-available',
-    Restricted: 'badge-restricted',
-    Sacred: 'badge-restricted',
+    Available: 'bg-green-500 text-white',
+    Borrowed: 'bg-orange-500 text-white',
+    Reserved: 'bg-red-500 text-white',
+    Restricted: 'bg-red-500 text-white',
+    Returned: 'bg-green-500 text-white',
+    Active: 'bg-green-500 text-white',
+    Inactive: 'bg-gray-500 text-white',
+    Published: 'bg-green-500 text-white',
+    Draft: 'bg-yellow-500 text-black',
+    IKSP: 'bg-purple-500 text-white',
+    CL: 'bg-yellow-500 text-black',
+    Public: 'bg-green-500 text-white',
+    Sacred: 'bg-red-500 text-white',
   }
 
-  const style = statusStyles[status] || 'bg-gray-50 text-gray-700 border border-gray-300'
+  const style = statusStyles[status] || 'bg-gray-500 text-white'
 
   return (
     <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-smooth ${style}`}>
