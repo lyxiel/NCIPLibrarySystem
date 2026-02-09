@@ -7,7 +7,7 @@ import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import BookModal from '@/components/BookModal'
 import { mockBooks } from '@/lib/mockData'
-import { Plus, Search, Edit, Trash2, Grid3x3, List, BookOpen } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Grid3x3, List, BookOpen, FileUp } from 'lucide-react'
 
 export default function BooksPage() {
   const router = useRouter()
@@ -67,6 +67,45 @@ export default function BooksPage() {
     }
   }
 
+  const handleImportCSV = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const text = String(event.target?.result || '')
+        const lines = text.split('\n')
+        const headers = lines[0].split(',')
+        
+        const newBooks = lines.slice(1)
+          .filter(line => line.trim())
+          .map((line) => {
+            const values = line.split(',')
+            return {
+              id: Math.max(...books.map((b) => b.id), 0) + 1,
+              code: values[0]?.trim() || '',
+              resourceType: values[1]?.trim() || '',
+              title: values[2]?.trim() || '',
+              author: values[3]?.trim() || '',
+              publisher: values[4]?.trim() || '',
+              subject: values[5]?.trim() || '',
+              datePublished: values[6]?.trim() || '',
+              copies: parseInt(values[7]) || 0,
+              status: values[8]?.trim() || 'Available',
+              dateAdded: new Date().toISOString().split('T')[0],
+            }
+          })
+        
+        setBooks([...books, ...newBooks])
+        alert(`Successfully imported ${newBooks.length} books from CSV`)
+      } catch (error) {
+        alert('Error importing CSV: ' + (error instanceof Error ? error.message : 'Unknown error'))
+      }
+    }
+    reader.readAsText(file)
+  }
+
   const columns = [
     { key: 'code', label: 'CODE', width: '12%' },
     { key: 'resourceType', label: 'Resource Type', width: '10%' },
@@ -123,16 +162,28 @@ export default function BooksPage() {
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Library Materials</h1>
             <p className="text-muted-foreground">Manage library book collection • {filteredBooks.length} items</p>
           </div>
-          <button
-            onClick={() => {
-              setEditingBook(null)
-              setIsModalOpen(true)
-            }}
-            className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
-          >
-            <Plus size={20} />
-            Add Book
-          </button>
+          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+            <button
+              onClick={() => {
+                setEditingBook(null)
+                setIsModalOpen(true)
+              }}
+              className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
+            >
+              <Plus size={20} />
+              Add Book
+            </button>
+            <label className="w-full md:w-auto flex items-center justify-center gap-2 bg-secondary text-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95 cursor-pointer">
+              <FileUp size={20} />
+              Import CSV
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleImportCSV}
+                className="hidden"
+              />
+            </label>
+          </div>
         </div>
 
         {/* Search and Filter Bar */}

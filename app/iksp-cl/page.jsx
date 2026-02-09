@@ -6,7 +6,7 @@ import AppLayout from '@/components/AppLayout'
 import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import MaterialModal from '@/components/MaterialModal'
-import { Plus, Search, Edit, Trash2, Lock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Lock, CheckCircle, AlertCircle, FileUp } from 'lucide-react'
 
 export default function IKSPCLPage() {
   const router = useRouter()
@@ -151,6 +151,49 @@ export default function IKSPCLPage() {
     }
   }
 
+  const handleImportCSV = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const text = String(event.target?.result || '')
+        const lines = text.split('\n')
+        const headers = lines[0].split(',')
+        
+        const newMaterials = lines.slice(1)
+          .filter(line => line.trim())
+          .map((line) => {
+            const values = line.split(',')
+            return {
+              id: Math.max(...materials.map((m) => m.id), 0) + 1,
+              codeNumber: values[0]?.trim() || '',
+              title: values[1]?.trim() || '',
+              group: values[2]?.trim() || '',
+              type: values[3]?.trim() || '',
+              copies: parseInt(values[4]) || 0,
+              sensitivity: values[5]?.trim() || 'Public',
+              fpicRequired: values[6]?.trim().toLowerCase() === 'true',
+              subject: values[7]?.trim() || '',
+              remarks: values[8]?.trim() || '',
+              region: values[9]?.trim() || '',
+              province: values[10]?.trim() || '',
+              municipality: values[11]?.trim() || '',
+              barangay: values[12]?.trim() || '',
+              lastUpdated: new Date().toISOString().split('T')[0],
+            }
+          })
+        
+        setMaterials([...materials, ...newMaterials])
+        alert(`Successfully imported ${newMaterials.length} materials from CSV`)
+      } catch (error) {
+        alert('Error importing CSV: ' + (error instanceof Error ? error.message : 'Unknown error'))
+      }
+    }
+    reader.readAsText(file)
+  }
+
   const columns = [
     { key: 'codeNumber', label: 'Code Number', width: '7%' },
     { key: 'title', label: 'Title', width: '13%' },
@@ -215,16 +258,28 @@ export default function IKSPCLPage() {
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">IKSP/CL</h1>
             <p className="text-muted-foreground">Indigenous Knowledge and Skills Portfolio / Cultural Library</p>
           </div>
-          <button
-            onClick={() => {
-              setEditingMaterial(null)
-              setIsModalOpen(true)
-            }}
-            className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
-          >
-            <Plus size={20} />
-            Add Material
-          </button>
+          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+            <button
+              onClick={() => {
+                setEditingMaterial(null)
+                setIsModalOpen(true)
+              }}
+              className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
+            >
+              <Plus size={20} />
+              Add Material
+            </button>
+            <label className="w-full md:w-auto flex items-center justify-center gap-2 bg-secondary text-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95 cursor-pointer">
+              <FileUp size={20} />
+              Import CSV
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleImportCSV}
+                className="hidden"
+              />
+            </label>
+          </div>
         </div>
 
         {/* Search and Filter */}
