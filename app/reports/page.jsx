@@ -18,8 +18,17 @@ export default function ReportsPage() {
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn')
+    const role = localStorage.getItem('userRole')
+    
     if (!isLoggedIn) {
       router.push('/login')
+      return
+    }
+
+    // Only ADMIN can access this page
+    if (role !== 'admin') {
+      router.push('/dashboard')
+      return
     }
   }, [router])
 

@@ -15,8 +15,8 @@ export default function LoginPage() {
 
   const mockUsers = [
     { role: 'admin', email: 'admin@ncip.gov.ph', password: 'admin123' },
-    { role: 'librarian', email: 'librarian@ncip.gov.ph', password: 'lib123' },
     { role: 'staff', email: 'staff@ncip.gov.ph', password: 'staff123' },
+    { role: 'user', email: 'user@ncip.gov.ph', password: 'user123' },
   ]
 
   const handleSubmit = (e) => {

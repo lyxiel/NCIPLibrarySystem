@@ -6,12 +6,13 @@ import AppLayout from '@/components/AppLayout'
 import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import MaterialModal from '@/components/MaterialModal'
-import { Plus, Search, Edit, Trash2, Lock, CheckCircle, AlertCircle, FileUp } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Lock, CheckCircle, AlertCircle, FileUp, Check } from 'lucide-react'
 
 export default function IKSPCLPage() {
   const router = useRouter()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState(null)
+  const [userRole, setUserRole] = useState('user')
   const [materials, setMaterials] = useState([
     {
       id: 1,
@@ -107,6 +108,9 @@ export default function IKSPCLPage() {
     const isLoggedIn = localStorage.getItem('isLoggedIn')
     if (!isLoggedIn) {
       router.push('/login')
+    } else {
+      const role = localStorage.getItem('userRole') || 'user'
+      setUserRole(role)
     }
   }, [router])
 
@@ -231,20 +235,26 @@ export default function IKSPCLPage() {
       <td className="px-6 py-4 text-sm text-muted-foreground">{material.remarks}</td>
       <td className="px-6 py-4 text-sm">
         <div className="flex gap-2">
-          <button
-            onClick={() => handleEditMaterial(material)}
-            className="p-2 text-blue-500 hover:bg-blue-50 hover:shadow-md hover:scale-125 rounded-lg transition-all duration-300 transform"
-            title="Edit material"
-          >
-            <Edit size={18} />
-          </button>
-          <button
-            onClick={() => handleDeleteMaterial(material.id)}
-            className="p-2 text-red-500 hover:bg-red-50 hover:shadow-md hover:scale-125 rounded-lg transition-all duration-300 transform"
-            title="Delete material"
-          >
-            <Trash2 size={18} />
-          </button>
+          {(userRole === 'admin' || userRole === 'staff') ? (
+            <>
+              <button
+                onClick={() => handleEditMaterial(material)}
+                className="p-2 text-blue-500 hover:bg-blue-50 hover:shadow-md hover:scale-125 rounded-lg transition-all duration-300 transform"
+                title="Edit material"
+              >
+                <Edit size={18} />
+              </button>
+              <button
+                onClick={() => handleDeleteMaterial(material.id)}
+                className="p-2 text-red-500 hover:bg-red-50 hover:shadow-md hover:scale-125 rounded-lg transition-all duration-300 transform"
+                title="Delete material"
+              >
+                <Trash2 size={18} />
+              </button>
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">Read-only</span>
+          )}
         </div>
       </td>
     </>
@@ -258,27 +268,30 @@ export default function IKSPCLPage() {
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">IKSP/CL</h1>
             <p className="text-muted-foreground">Indigenous Knowledge and Skills Portfolio / Cultural Library</p>
           </div>
-          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-            <button
-              onClick={() => {
-                setEditingMaterial(null)
-                setIsModalOpen(true)
-              }}
-              className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
-            >
-              <Plus size={20} />
-              Add Material
-            </button>
-            <label className="w-full md:w-auto flex items-center justify-center gap-2 bg-secondary text-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95 cursor-pointer">
-              <FileUp size={20} />
-              Import CSV
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleImportCSV}
-                className="hidden"
-              />
-            </label>
+          {(userRole === 'admin' || userRole === 'staff') && (
+            <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+              <button
+                onClick={() => {
+                  setEditingMaterial(null)
+                  setIsModalOpen(true)
+                }}
+                className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
+              >
+                <Plus size={20} />
+                Add Material
+              </button>
+              <label className="w-full md:w-auto flex items-center justify-center gap-2 bg-secondary text-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95 cursor-pointer">
+                <FileUp size={20} />
+                Import CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleImportCSV}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          )}
           </div>
         </div>
 
@@ -312,15 +325,17 @@ export default function IKSPCLPage() {
         <Table columns={columns} data={filteredMaterials} renderRow={renderRow} />
 
         {/* Material Modal */}
-        <MaterialModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false)
-            setEditingMaterial(null)
-          }}
-          onSubmit={handleAddMaterial}
-          initialData={editingMaterial}
-        />
+        {(userRole === 'admin' || userRole === 'staff') && (
+          <MaterialModal
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false)
+              setEditingMaterial(null)
+            }}
+            onSubmit={handleAddMaterial}
+            initialData={editingMaterial}
+          />
+        )}
       </div>
     </AppLayout>
   )

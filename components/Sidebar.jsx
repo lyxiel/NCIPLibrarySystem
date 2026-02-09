@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   BookOpen,
@@ -11,24 +11,61 @@ import {
   Settings,
   LogOut,
   X,
+  UserCircle,
 } from 'lucide-react'
 
 const Sidebar = ({ isOpen, onClose }) => {
   const pathname = usePathname()
+  const router = useRouter()
 
   const isActive = (href) => pathname === href
+  const userRole = typeof window !== 'undefined' ? localStorage.getItem('userRole') : 'user'
 
-  const menuItems = [
+  // ADMIN: Can manage account and system only
+  const adminMenuItems = [
+    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Reports', href: '/reports', icon: BarChart3 },
+    { label: 'Settings', href: '/settings', icon: Settings },
+    { label: 'Admin Panel', href: '/admin', icon: Settings },
+    { label: 'My Profile', href: '/profile', icon: UserCircle },
+    { label: 'Account Settings', href: '/account', icon: Settings },
+  ]
+
+  // STAFF: Can do CRUD operations
+  const staffMenuItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Library Materials', href: '/books', icon: BookOpen },
     { label: 'Borrowing', href: '/borrowing', icon: BookOpen },
     { label: 'Members', href: '/members', icon: Users },
     { label: 'Indigenous Archive', href: '/archive', icon: Archive },
     { label: 'IKSP/CL', href: '/iksp-cl', icon: Archive },
-    { label: 'Reports', href: '/reports', icon: BarChart3 },
-    { label: 'Settings', href: '/settings', icon: Settings },
-    { label: 'Admin Panel', href: '/admin', icon: Settings },
+    { label: 'My Profile', href: '/profile', icon: UserCircle },
+    { label: 'Account Settings', href: '/account', icon: Settings },
   ]
+
+  // USER: Can borrow and read only
+  const userMenuItems = [
+    { label: 'Browse Books', href: '/books', icon: BookOpen },
+    { label: 'My Borrowings', href: '/borrowing', icon: BookOpen },
+    { label: 'Indigenous Archive', href: '/archive', icon: Archive },
+    { label: 'My Profile', href: '/profile', icon: UserCircle },
+    { label: 'Account Settings', href: '/account', icon: Settings },
+  ]
+
+  const getMenuItems = () => {
+    if (userRole === 'admin') return adminMenuItems
+    if (userRole === 'staff') return staffMenuItems
+    return userMenuItems
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn')
+    localStorage.removeItem('userRole')
+    localStorage.removeItem('rememberEmail')
+    router.push('/login')
+  }
+
+  const menuItems = getMenuItems()
 
   return (
     <>
@@ -68,7 +105,9 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="border-t border-sidebar-border p-4 space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-gold-accent hover:text-dark-navy hover:shadow-md hover:translate-x-1 transition-all duration-300 transform">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-gold-accent hover:text-dark-navy hover:shadow-md hover:translate-x-1 transition-all duration-300 transform">
             <LogOut size={20} />
             <span>Logout</span>
           </button>
@@ -117,7 +156,9 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="border-t border-sidebar-border p-4 space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-gold-accent hover:text-dark-navy hover:shadow-md hover:translate-x-1 transition-all duration-300 transform">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-gold-accent hover:text-dark-navy hover:shadow-md hover:translate-x-1 transition-all duration-300 transform">
             <LogOut size={20} />
             <span>Logout</span>
           </button>

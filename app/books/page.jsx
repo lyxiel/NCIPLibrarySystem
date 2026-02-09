@@ -7,7 +7,7 @@ import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import BookModal from '@/components/BookModal'
 import { mockBooks } from '@/lib/mockData'
-import { Plus, Search, Edit, Trash2, Grid3x3, List, BookOpen, FileUp } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Grid3x3, List, BookOpen, FileUp, Check } from 'lucide-react'
 
 export default function BooksPage() {
   const router = useRouter()
@@ -17,11 +17,18 @@ export default function BooksPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingBook, setEditingBook] = useState(null)
   const [viewMode, setViewMode] = useState('table') // 'table' or 'grid'
+  const [userRole, setUserRole] = useState('user')
+  const [borrowedBooks, setBorrowedBooks] = useState([])
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn') 
     if (!isLoggedIn) {
       router.push('/login')
+    } else {
+      const role = localStorage.getItem('userRole') || 'user'
+      setUserRole(role)
+      // Redirect USER role to books page title as "Browse Books"
+      // No redirection needed, just set state for UI difference
     }
   }, [router])
 
@@ -106,6 +113,35 @@ export default function BooksPage() {
     reader.readAsText(file)
   }
 
+  const handleBorrowBook = (bookId) => {
+    const book = books.find(b => b.id === bookId)
+    if (!book) return
+    
+    if (book.status !== 'Available') {
+      alert('This book is not available for borrowing at the moment.')
+      return
+    }
+
+    const dueDate = new Date()
+    dueDate.setDate(dueDate.getDate() + 14) // 2 weeks borrowing period
+    
+    const borrowRecord = {
+      bookId,
+      bookTitle: book.title,
+      borrowDate: new Date().toISOString().split('T')[0],
+      dueDate: dueDate.toISOString().split('T')[0],
+    }
+    
+    setBorrowedBooks([...borrowedBooks, borrowRecord])
+    
+    // Update book status to borrowed
+    setBooks(books.map(b => 
+      b.id === bookId ? { ...b, status: 'Borrowed' } : b
+    ))
+    
+    alert(`Successfully borrowed "${book.title}". Due date: ${borrowRecord.dueDate}`)
+  }
+
   const columns = [
     { key: 'code', label: 'CODE', width: '12%' },
     { key: 'resourceType', label: 'Resource Type', width: '10%' },
@@ -134,6 +170,8 @@ export default function BooksPage() {
       </td>
       <td className="px-6 py-4 text-sm">
         <div className="flex gap-2">
+          {(userRole === 'admin' || userRole === 'staff') ? (
+            <>
           <button
             onClick={() => handleEditBook(book)}
             className="p-2 text-blue-500 hover:bg-blue-50 hover:shadow-md hover:scale-125 rounded-lg transition-all duration-300 transform"
@@ -148,6 +186,21 @@ export default function BooksPage() {
           >
             <Trash2 size={18} />
           </button>
+            </>
+          ) : (
+            <button
+              onClick={() => handleBorrowBook(book.id)}
+              disabled={book.status !== 'Available'}
+              className={`p-2 rounded-lg transition-all duration-300 transform ${
+                book.status === 'Available'
+                  ? 'text-green-500 hover:bg-green-50 hover:shadow-md hover:scale-125'
+                  : 'text-gray-400 cursor-not-allowed'
+              }`}
+              title={book.status === 'Available' ? 'Borrow this book' : 'Not available'}
+            >
+              <Check size={18} />
+            </button>
+          )}
         </div>
       </td>
     </>
@@ -160,8 +213,9 @@ export default function BooksPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Library Materials</h1>
-            <p className="text-muted-foreground">Manage library book collection • {filteredBooks.length} items</p>
+            <p className="text-muted-foreground">{userRole === 'user' ? 'Browse and borrow books' : 'Manage library book collection'} • {filteredBooks.length} items</p>
           </div>
+          {(userRole === 'admin' || userRole === 'staff') && (
           <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
             <button
               onClick={() => {
@@ -184,6 +238,7 @@ export default function BooksPage() {
               />
             </label>
           </div>
+          )}
         </div>
 
         {/* Search and Filter Bar */}
@@ -304,15 +359,17 @@ export default function BooksPage() {
         )}
 
         {/* Book Modal */}
-        <BookModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false)
-            setEditingBook(null)
-          }}
-          onSubmit={handleAddBook}
-          initialData={editingBook}
-        />
+        {(userRole === 'admin' || userRole === 'staff') && (
+          <BookModal
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false)
+              setEditingBook(null)
+            }}
+            onSubmit={handleAddBook}
+            initialData={editingBook}
+          />
+        )}
       </div>
     </AppLayout>
   )

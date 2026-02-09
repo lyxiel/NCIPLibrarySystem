@@ -12,6 +12,7 @@ export default function ArchivePage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [userRole, setUserRole] = useState('user')
   const [formData, setFormData] = useState({
     title: '',
     type: 'Oral History',
@@ -21,9 +22,14 @@ export default function ArchivePage() {
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn')
+    const role = localStorage.getItem('userRole')
+    
     if (!isLoggedIn) {
       router.push('/login')
+      return
     }
+
+    setUserRole(role || 'user')
   }, [router])
 
   const filteredItems = archiveItems.filter((item) => {
@@ -60,18 +66,22 @@ export default function ArchivePage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Indigenous Knowledge Archive</h1>
-            <p className="text-muted-foreground">Preserve and document indigenous cultural heritage</p>
+            <p className="text-muted-foreground">
+              {userRole === 'user' ? 'Explore and read cultural heritage materials' : 'Preserve and document indigenous cultural heritage'}
+            </p>
           </div>
-          <button
-            onClick={() => {
-              setFormData({ title: '', type: 'Oral History', content: '', contributor: '' })
-              setIsModalOpen(true)
-            }}
-            className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
-          >
-            <Plus size={20} />
-            Add Archive Item
-          </button>
+          {(userRole === 'admin' || userRole === 'staff') && (
+            <button
+              onClick={() => {
+                setFormData({ title: '', type: 'Oral History', content: '', contributor: '' })
+                setIsModalOpen(true)
+              }}
+              className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
+            >
+              <Plus size={20} />
+              Add Archive Item
+            </button>
+          )}
         </div>
 
         {/* Search and Filter */}
@@ -129,7 +139,7 @@ export default function ArchivePage() {
         )}
 
         {/* Add Archive Item Modal */}
-        {isModalOpen && (
+        {isModalOpen && (userRole === 'admin' || userRole === 'staff') && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
               <div className="flex items-center justify-between mb-4">

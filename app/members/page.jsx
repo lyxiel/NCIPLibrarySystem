@@ -15,6 +15,7 @@ export default function MembersPage() {
   const [filterType, setFilterType] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingMember, setEditingMember] = useState(null)
+  const [userRole, setUserRole] = useState('user')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,8 +24,19 @@ export default function MembersPage() {
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn')
+    const role = localStorage.getItem('userRole')
+    
     if (!isLoggedIn) {
       router.push('/login')
+      return
+    }
+
+    setUserRole(role || 'user')
+
+    // Only STAFF can access this page
+    if (role !== 'admin' && role !== 'staff') {
+      router.push('/dashboard')
+      return
     }
   }, [router])
 

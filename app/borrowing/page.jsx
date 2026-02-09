@@ -16,11 +16,20 @@ export default function BorrowingPage() {
   const [filterStatus, setFilterStatus] = useState('')
   const [isBorrowModalOpen, setIsBorrowModalOpen] = useState(false)
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false)
+  const [userRole, setUserRole] = useState('user')
+  const [currentUserId, setCurrentUserId] = useState(1) // Mock current user ID
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn')
     if (!isLoggedIn) {
       router.push('/login')
+      return
+    }
+    const role = localStorage.getItem('userRole') || 'user'
+    setUserRole(role)
+    // For users, they see their own borrowings (mocked as user ID 1)
+    if (role === 'user') {
+      setCurrentUserId(1)
     }
   }, [router])
 
@@ -44,7 +53,10 @@ export default function BorrowingPage() {
 
     const matchesStatus = !filterStatus || borrowing.status === filterStatus
 
-    return matchesSearch && matchesStatus
+    // Users only see their own borrowings
+    const isOwnBorrowing = userRole === 'user' ? borrowing.memberId === currentUserId : true
+
+    return matchesSearch && matchesStatus && isOwnBorrowing
   })
 
   const handleBorrowBook = (formData) => {
@@ -76,21 +88,32 @@ export default function BorrowingPage() {
     setIsReturnModalOpen(false)
   }
 
-  const columns = [
-    { key: 'member', label: 'Member', width: '20%' },
-    { key: 'book', label: 'Book', width: '25%' },
-    { key: 'borrowDate', label: 'Borrow Date', width: '12%' },
-    { key: 'dueDate', label: 'Due Date', width: '12%' },
-    { key: 'returnDate', label: 'Return Date', width: '12%' },
-    { key: 'status', label: 'Status', width: '10%' },
-    { key: 'actions', label: 'Actions', width: '9%' },
-  ]
+  const columns = userRole === 'user' 
+    ? [
+        { key: 'book', label: 'Book', width: '30%' },
+        { key: 'borrowDate', label: 'Borrow Date', width: '15%' },
+        { key: 'dueDate', label: 'Due Date', width: '15%' },
+        { key: 'returnDate', label: 'Return Date', width: '15%' },
+        { key: 'status', label: 'Status', width: '12%' },
+        { key: 'actions', label: 'Actions', width: '13%' },
+      ]
+    : [
+        { key: 'member', label: 'Member', width: '20%' },
+        { key: 'book', label: 'Book', width: '25%' },
+        { key: 'borrowDate', label: 'Borrow Date', width: '12%' },
+        { key: 'dueDate', label: 'Due Date', width: '12%' },
+        { key: 'returnDate', label: 'Return Date', width: '12%' },
+        { key: 'status', label: 'Status', width: '10%' },
+        { key: 'actions', label: 'Actions', width: '9%' },
+      ]
 
   const renderRow = (borrowing) => (
     <>
-      <td className="px-6 py-4 text-sm text-foreground font-medium">
-        {getMemberName(borrowing.memberId)}
-      </td>
+      {userRole !== 'user' && (
+        <td className="px-6 py-4 text-sm text-foreground font-medium">
+          {getMemberName(borrowing.memberId)}
+        </td>
+      )}
       <td className="px-6 py-4 text-sm text-muted-foreground">
         {getBookTitle(borrowing.bookId)}
       </td>
@@ -121,16 +144,22 @@ export default function BorrowingPage() {
       <div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Book Borrowing</h1>
-            <p className="text-muted-foreground">Manage book loans and returns</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+              {userRole === 'user' ? 'My Borrowings' : 'Book Borrowing'}
+            </h1>
+            <p className="text-muted-foreground">
+              {userRole === 'user' ? 'View and manage your borrowed books' : 'Manage book loans and returns'}
+            </p>
           </div>
-          <button
-            onClick={() => setIsBorrowModalOpen(true)}
-            className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
-          >
-            <Plus size={20} />
-            Borrow Book
-          </button>
+          {(userRole === 'admin' || userRole === 'staff') && (
+            <button
+              onClick={() => setIsBorrowModalOpen(true)}
+              className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
+            >
+              <Plus size={20} />
+              Borrow Book
+            </button>
+          )}
         </div>
 
         {/* Search and Filter */}
@@ -139,7 +168,7 @@ export default function BorrowingPage() {
             <Search className="absolute left-3 top-3 text-muted-foreground" size={20} />
             <input
               type="text"
-              placeholder="Search by member name or book title..."
+              placeholder={userRole === 'user' ? 'Search your borrowings...' : 'Search by member name or book title...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
@@ -160,14 +189,16 @@ export default function BorrowingPage() {
         <Table columns={columns} data={filteredBorrowings} renderRow={renderRow} />
 
         {/* Borrow Modal */}
-        <BorrowingModal
-          isOpen={isBorrowModalOpen}
-          onClose={() => setIsBorrowModalOpen(false)}
-          onSubmit={handleBorrowBook}
-          members={mockMembers}
-          books={mockBooks}
-          isBorrowing={true}
-        />
+        {(userRole === 'admin' || userRole === 'staff') && (
+          <BorrowingModal
+            isOpen={isBorrowModalOpen}
+            onClose={() => setIsBorrowModalOpen(false)}
+            onSubmit={handleBorrowBook}
+            members={mockMembers}
+            books={mockBooks}
+            isBorrowing={true}
+          />
+        )}
       </div>
     </AppLayout>
   )
