@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -18,8 +19,25 @@ const Sidebar = ({ isOpen, onClose }) => {
   const pathname = usePathname()
   const router = useRouter()
 
+  const [mounted, setMounted] = useState(false)
+  const [userRole, setUserRole] = useState('user')
+
+  useEffect(() => {
+    setMounted(true)
+    try {
+      const role = localStorage.getItem('userRole') || 'user'
+      setUserRole(role)
+    } catch (e) {
+      setUserRole('user')
+    }
+  }, [])
+
   const isActive = (href) => pathname === href
-  const userRole = typeof window !== 'undefined' ? localStorage.getItem('userRole') : 'user'
+
+  // Avoid rendering role-dependent menu on server to prevent hydration mismatch
+  if (!mounted) {
+    return null
+  }
 
   // ADMIN: Can manage account and system only
   const adminMenuItems = [

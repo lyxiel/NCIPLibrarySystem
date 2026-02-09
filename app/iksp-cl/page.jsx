@@ -292,7 +292,6 @@ export default function IKSPCLPage() {
               </label>
             </div>
           )}
-          </div>
         </div>
 
         {/* Search and Filter */}

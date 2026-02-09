@@ -16,6 +16,8 @@ import {
   FileText,
   CheckCircle,
   AlertTriangle,
+  Settings,
+  BarChart3,
 } from 'lucide-react'
 import { mockDashboardStats, mockActivityLog } from '@/lib/mockData'
 
