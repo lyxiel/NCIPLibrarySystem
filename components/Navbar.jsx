@@ -3,12 +3,12 @@
 import { Bell, User, Menu, LogOut, Settings, UserCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { mockUsers } from '@/lib/mockData'
 
 const Navbar = ({ onMenuClick }) => {
   const router = useRouter()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
@@ -25,6 +25,7 @@ const Navbar = ({ onMenuClick }) => {
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn')
     localStorage.removeItem('userRole')
+    setIsDropdownOpen(false)
     router.push('/login')
   }
 
@@ -43,9 +44,42 @@ const Navbar = ({ onMenuClick }) => {
 
       {/* Right side - Icons and user menu */}
       <div className="flex items-center gap-2 md:gap-4 relative">
-        <button className="p-2 hover:bg-gold-accent hover:text-dark-navy hover:shadow-md rounded-lg transition-all duration-300 transform hover:scale-110" title="Notifications">
-          <Bell size={20} className="text-foreground" />
-        </button>
+        {/* Notification Button */}
+        <div className="relative">
+          <button 
+            onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+            className="p-2 hover:bg-gold-accent hover:text-dark-navy hover:shadow-md rounded-lg transition-all duration-300 transform hover:scale-110" 
+            title="Notifications"
+          >
+            <Bell size={20} className="text-foreground" />
+          </button>
+          
+          {/* Notification Dropdown */}
+          {isNotificationOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white border border-border rounded-lg shadow-lg z-50">
+              <div className="px-4 py-3 border-b border-border bg-accent">
+                <p className="text-sm font-semibold text-foreground">Notifications</p>
+              </div>
+              <div className="max-h-96 overflow-y-auto">
+                <div className="px-4 py-3 hover:bg-accent transition-smooth text-left border-b border-border/50">
+                  <p className="text-sm font-medium text-foreground">Book Available</p>
+                  <p className="text-xs text-muted-foreground mt-1">The book you reserved is now available for pickup.</p>
+                  <p className="text-xs text-muted-foreground mt-2">Today at 10:30 AM</p>
+                </div>
+                <div className="px-4 py-3 hover:bg-accent transition-smooth text-left border-b border-border/50">
+                  <p className="text-sm font-medium text-foreground">Borrowing Due Soon</p>
+                  <p className="text-xs text-muted-foreground mt-1">Your borrowed book is due in 3 days.</p>
+                  <p className="text-xs text-muted-foreground mt-2">Yesterday at 2:15 PM</p>
+                </div>
+                <div className="px-4 py-3 hover:bg-accent transition-smooth text-left">
+                  <p className="text-sm font-medium text-foreground">System Update</p>
+                  <p className="text-xs text-muted-foreground mt-1">New materials have been added to the library.</p>
+                  <p className="text-xs text-muted-foreground mt-2">2 days ago</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
         
         {/* User Dropdown */}
         <div className="relative">
@@ -62,37 +96,36 @@ const Navbar = ({ onMenuClick }) => {
             <div className="absolute right-0 mt-2 w-64 bg-white border border-border rounded-lg shadow-lg z-50">
               {/* User Info */}
               <div className="px-4 py-3 border-b border-border bg-accent">
-                <p className="text-sm font-medium text-foreground">{currentUser.name}</p>
-                <p className="text-xs text-muted-foreground break-all">{currentUser.email}</p>
-                <p className="text-xs text-muted-foreground mt-1">{currentUser.role}</p>
+                <p className="text-sm font-medium text-foreground">{currentUser?.name}</p>
+                <p className="text-xs text-muted-foreground break-all">{currentUser?.email}</p>
+                <p className="text-xs text-muted-foreground mt-1">{currentUser?.role}</p>
               </div>
 
               {/* Menu Items */}
-              <Link href="/profile">
-                <button
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-foreground hover:bg-accent transition-smooth text-left"
-                >
-                  <UserCircle size={18} />
-                  <span>View Profile</span>
-                </button>
-              </Link>
-
-              <Link href="/account">
-                <button
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-foreground hover:bg-accent transition-smooth text-left border-t border-border"
-                >
-                  <Settings size={18} />
-                  <span>Account Settings</span>
-                </button>
-              </Link>
+              <button
+                onClick={() => {
+                  setIsDropdownOpen(false)
+                  router.push('/profile')
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-foreground hover:bg-accent transition-smooth text-left"
+              >
+                <UserCircle size={18} />
+                <span>View Profile</span>
+              </button>
 
               <button
                 onClick={() => {
-                  handleLogout()
                   setIsDropdownOpen(false)
+                  router.push('/account')
                 }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-foreground hover:bg-accent transition-smooth text-left border-t border-border"
+              >
+                <Settings size={18} />
+                <span>Account Settings</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-smooth text-left border-t border-border"
               >
                 <LogOut size={18} />

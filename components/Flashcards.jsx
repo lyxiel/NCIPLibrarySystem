@@ -1,43 +1,84 @@
 "use client"
 
 import Link from 'next/link'
-import { BookOpen, Shield, Star, Globe, Users, Heart, LogIn, Grid } from 'lucide-react'
+import { BookOpen, Shield, Globe, Users } from 'lucide-react'
 
 const cards = [
-  { title: 'Mandate', body: 'Preserve and protect Indigenous cultural heritage and knowledge systems.', icon: Shield },
-  { title: 'Vision', body: 'A resilient and culturally grounded library network for Indigenous communities.', icon: Globe },
-  { title: 'Mission', body: 'Support access, preservation, and community-led stewardship of materials.', icon: BookOpen },
-  { title: 'Core Values', body: 'Respect, Reciprocity, Community, Stewardship, Responsibility.', icon: Users },
-  { title: 'Access', body: 'Rights to use, learn from, and share cultural resources with dignity.', icon: BookOpen },
-  { title: 'Protection', body: 'Safeguard culturally sensitive materials and respect Free, Prior, Informed Consent.', icon: Star },
+  { key: 'mandate', title: 'Mandate', body: 'Protect and promote the well-being of ICCs/IPs', icon: Shield },
+  { key: 'vision', title: 'Vision', body: 'A resilient and culturally grounded library network', icon: Globe },
+  { key: 'mission', title: 'Mission', body: 'Support access, preservation, and community-led stewardship', icon: BookOpen },
+  { key: 'corevalues', title: 'Core Values', body: 'Altruism, Trust, Nurturing, Culture-Sensitive, Integrity, Professionalism', icon: Users },
 ]
 
 export default function Flashcards({ className = '' }) {
+  const openCard = (key) => {
+    window.dispatchEvent(new CustomEvent('openInfoCard', { detail: { type: key } }))
+  }
+
   return (
-    <section className={`max-w-7xl mx-auto py-24 px-4 ${className}`}>
-      <div className="max-w-3xl mx-auto text-center mb-12 text-white">
-        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">NCIP Library System</h1>
-        <p className="mt-4 text-lg md:text-xl opacity-90">Protecting and promoting Indigenous knowledge, culture, and community rights.</p>
-      </div>
+    <section className={`min-h-screen w-full ${className}`}>
+      {/* Top Navigation - About, Browse Materials, Login */}
+      <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-end gap-4 items-center">
+        <button
+          onClick={() => openCard('about')}
+          className="px-5 py-2 rounded-md font-semibold text-black hover:text-[#0B3C5D] transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
+        >
+          About
+        </button>
+        <Link
+          href="/books"
+          className="px-5 py-2 rounded-md font-semibold border-2 border-[#0B3C5D] text-black hover:bg-[#0B3C5D] hover:text-white transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
+        >
+          Browse Materials
+        </Link>
+        <Link
+          href="/login"
+          className="px-5 py-2 rounded-md font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
+          style={{ backgroundColor: '#0B3C5D' }}
+        >
+          Login / Sign In
+        </Link>
+      </nav>
 
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((c) => (
-          <div key={c.title} className="p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:scale-[1.02] transition-transform duration-200">
-            <div className="flex items-center gap-4 mb-3">
-              <div style={{ backgroundColor: 'rgba(11,60,93,0.8)', color: '#CFAE70' }} className="p-2 rounded-md">
-                <c.icon className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-semibold text-white">{c.title}</h3>
-            </div>
-            <p className="text-sm opacity-85 text-white leading-relaxed">{c.body}</p>
+      {/* Hero Section */}
+      <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
+        <div className="max-w-4xl mx-auto text-center mb-16">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-4 text-black">
+            NCIP Knowledge and Library System
+          </h1>
+          <p className="text-2xl md:text-3xl font-semibold text-black/90 mb-6">
+            Preserving Indigenous Knowledge, Protecting Cultural Heritage
+          </p>
+          <p className="mt-4 text-lg md:text-xl text-black/80 max-w-2xl mx-auto leading-relaxed">
+            A comprehensive digital repository dedicated to safeguarding and promoting Indigenous knowledge systems, cultural heritage, and community resources with respect and dignity.
+          </p>
+        </div>
+
+        {/* About Flash Cards Grid */}
+        <div className="mt-20">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-black mb-12">About NKLS</h2>
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {cards.map((c) => (
+              <button
+                key={c.key}
+                onClick={() => openCard(c.key)}
+                className="text-left p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 active:scale-95 cursor-pointer overflow-hidden group"
+                style={{ backgroundColor: '#FFF' }}
+              >
+                {/* Gold top border accent */}
+                <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: '#CFAE70' }} />
+                
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 rounded-lg transition-all duration-300 group-hover:shadow-md" style={{ backgroundColor: '#0B3C5D', color: '#CFAE70' }}>
+                    <c.icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-semibold" style={{ color: '#0B3C5D' }}>{c.title}</h3>
+                </div>
+                <p className="text-black/80 leading-relaxed text-sm">{c.body}</p>
+              </button>
+            ))}
           </div>
-        ))}
-      </div>
-
-      <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-        <Link href="/login" style={{ background: 'linear-gradient(to right,#CFAE70,#FFD36A)', color: '#072A40' }} className="px-6 py-3 rounded-md font-semibold shadow-lg link-underline cta-navy">Login</Link>
-        <Link href="/dashboard" className="px-6 py-3 rounded-md border border-white/20 text-white link-underline">Dashboard</Link>
-        <Link href="/books" className="px-6 py-3 rounded-md bg-transparent text-white/90 border border-white/10 link-underline">View Materials</Link>
+        </div>
       </div>
     </section>
   )

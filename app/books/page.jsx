@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
+import GuestHeader from '@/components/GuestHeader'
 import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import BookModal from '@/components/BookModal'
@@ -18,19 +19,15 @@ export default function BooksPage() {
   const [editingBook, setEditingBook] = useState(null)
   const [viewMode, setViewMode] = useState('table') // 'table' or 'grid'
   const [userRole, setUserRole] = useState('user')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [borrowedBooks, setBorrowedBooks] = useState([])
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') 
-    if (!isLoggedIn) {
-      router.push('/login')
-    } else {
-      const role = localStorage.getItem('userRole') || 'user'
-      setUserRole(role)
-      // Redirect USER role to books page title as "Browse Books"
-      // No redirection needed, just set state for UI difference
-    }
-  }, [router])
+    const role = localStorage.getItem('userRole') || 'user'
+    const loggedIn = !!localStorage.getItem('isLoggedIn')
+    setUserRole(role)
+    setIsLoggedIn(loggedIn)
+  }, [])
 
   const filteredBooks = books.filter((book) => {
     const matchesSearch =
@@ -114,6 +111,14 @@ export default function BooksPage() {
   }
 
   const handleBorrowBook = (bookId) => {
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('isLoggedIn')
+    if (!isLoggedIn) {
+      alert('Please log in to borrow books.')
+      router.push('/login')
+      return
+    }
+
     const book = books.find(b => b.id === bookId)
     if (!book) return
     
@@ -208,6 +213,7 @@ export default function BooksPage() {
 
   return (
     <AppLayout>
+      <GuestHeader />
       <div className="space-y-6">
         {/* Header with Title and Action Button */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -240,6 +246,15 @@ export default function BooksPage() {
           </div>
           )}
         </div>
+
+        {/* Info Box */}
+        {!isLoggedIn && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-900">
+              <strong>Welcome!</strong> You can browse and explore all our library materials freely. To borrow a book, simply click the checkmark icon and you'll be prompted to log in.
+            </p>
+          </div>
+        )}
 
         {/* Search and Filter Bar */}
         <div className="card-soft">

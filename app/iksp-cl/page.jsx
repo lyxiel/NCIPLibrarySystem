@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
+import GuestHeader from '@/components/GuestHeader'
 import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import MaterialModal from '@/components/MaterialModal'
@@ -13,6 +14,7 @@ export default function IKSPCLPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState(null)
   const [userRole, setUserRole] = useState('user')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [materials, setMaterials] = useState([
     {
       id: 1,
@@ -105,16 +107,22 @@ export default function IKSPCLPage() {
   const [filterType, setFilterType] = useState('')
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn')
-    if (!isLoggedIn) {
-      router.push('/login')
-    } else {
-      const role = localStorage.getItem('userRole') || 'user'
-      setUserRole(role)
-    }
-  }, [router])
+    const role = localStorage.getItem('userRole') || 'user'
+    const loggedIn = !!localStorage.getItem('isLoggedIn')
+    setUserRole(role)
+    setIsLoggedIn(loggedIn)
+  }, [])
 
   const filteredMaterials = materials.filter((material) => {
+    // Check sensitivity level
+    const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('isLoggedIn')
+    if (material.sensitivity === 'Restricted' && !isLoggedIn) {
+      return false // Hide restricted items from guests
+    }
+    if (material.sensitivity === 'Sacred' && !isLoggedIn) {
+      return false // Hide sacred items from guests
+    }
+
     const matchesSearch =
       material.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       material.codeNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -262,6 +270,7 @@ export default function IKSPCLPage() {
 
   return (
     <AppLayout>
+      <GuestHeader />
       <div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
@@ -293,6 +302,15 @@ export default function IKSPCLPage() {
             </div>
           )}
         </div>
+
+        {/* Info Box */}
+        {!isLoggedIn && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-purple-900">
+              <strong>Welcome to IKSP/CL!</strong> Browse public Indigenous Knowledge and Skills Portfolio materials freely. Some materials marked as Sacred or Restricted require FPIC (Free, Prior, and Informed Consent) and are available only to registered members. Log in to access these materials.
+            </p>
+          </div>
+        )}
 
         {/* Search and Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">

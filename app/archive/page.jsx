@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
+import GuestHeader from '@/components/GuestHeader'
 import { mockArchiveItems } from '@/lib/mockData'
 import { Search, Plus, BookOpen, Volume2, FileText, X } from 'lucide-react'
 
@@ -13,6 +14,7 @@ export default function ArchivePage() {
   const [filterType, setFilterType] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [userRole, setUserRole] = useState('user')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     type: 'Oral History',
@@ -21,16 +23,11 @@ export default function ArchivePage() {
   })
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn')
-    const role = localStorage.getItem('userRole')
-    
-    if (!isLoggedIn) {
-      router.push('/login')
-      return
-    }
-
-    setUserRole(role || 'user')
-  }, [router])
+    const role = localStorage.getItem('userRole') || 'user'
+    const loggedIn = !!localStorage.getItem('isLoggedIn')
+    setUserRole(role)
+    setIsLoggedIn(loggedIn)
+  }, [])
 
   const filteredItems = archiveItems.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -62,6 +59,7 @@ export default function ArchivePage() {
 
   return (
     <AppLayout>
+      <GuestHeader />
       <div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
@@ -83,6 +81,15 @@ export default function ArchivePage() {
             </button>
           )}
         </div>
+
+        {/* Info Box */}
+        {!isLoggedIn && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-900">
+              <strong>Welcome!</strong> You can freely explore our Indigenous Knowledge Archive. Some sensitive and sacred materials are only available to registered members. Log in to access restricted content.
+            </p>
+          </div>
+        )}
 
         {/* Search and Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">

@@ -6,7 +6,7 @@ export default function Logo() {
     <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
       <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
         <Image
-          src="https://sl.bing.net/kFsDWzrkscC"
+          src="/oppr.svg"
           alt="NCIP Logo"
           fill
           className="object-contain"
