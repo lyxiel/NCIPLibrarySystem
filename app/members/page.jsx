@@ -96,7 +96,7 @@ export default function MembersPage() {
   ]
 
   const renderRow = (member) => (
-    <>
+    <tr key={member.id} className="border-b border-border hover:bg-[hsl(205,30%,88%)] dark:hover:bg-[hsl(205,54%,20%)] transition-all duration-300 ease-in-out">
       <td className="px-6 py-4 text-sm text-foreground font-medium">{member.name}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{member.email}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{member.type}</td>
@@ -123,7 +123,7 @@ export default function MembersPage() {
           </button>
         </div>
       </td>
-    </>
+    </tr>
   )
 
   return (

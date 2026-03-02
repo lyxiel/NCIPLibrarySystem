@@ -19,6 +19,7 @@ export default function IKSPCLPage() {
     {
       id: 1,
       codeNumber: 'IKSP-001',
+      availability: 'Hardcopy',
       region: 'Region IV-A',
       province: 'Laguna',
       municipality: 'Paete',
@@ -36,6 +37,7 @@ export default function IKSPCLPage() {
     {
       id: 2,
       codeNumber: 'IKSP-002',
+      availability: 'Softcopy',
       region: 'Region XI',
       province: 'Davao del Sur',
       municipality: 'Malita',
@@ -53,6 +55,7 @@ export default function IKSPCLPage() {
     {
       id: 3,
       codeNumber: 'IKSP-003',
+      availability: 'Both',
       region: 'Region I',
       province: 'Pangasinan',
       municipality: 'Bolinao',
@@ -70,6 +73,7 @@ export default function IKSPCLPage() {
     {
       id: 4,
       codeNumber: 'IKSP-004',
+      availability: 'Hardcopy',
       region: 'Region VIII',
       province: 'Leyte',
       municipality: 'Baybay',
@@ -87,6 +91,7 @@ export default function IKSPCLPage() {
     {
       id: 5,
       codeNumber: 'IKSP-005',
+      availability: 'Both',
       region: 'Region VI',
       province: 'Capiz',
       municipality: 'Panay',
@@ -209,6 +214,7 @@ export default function IKSPCLPage() {
   const columns = [
     { key: 'codeNumber', label: 'Code Number', width: '7%' },
     { key: 'title', label: 'Title', width: '13%' },
+    { key: 'availability', label: 'Availability', width: '8%' },
     { key: 'group', label: 'Group', width: '8%' },
     { key: 'type', label: 'Type', width: '8%' },
     { key: 'copies', label: 'Copies', width: '6%' },
@@ -220,8 +226,9 @@ export default function IKSPCLPage() {
   ]
 
   const renderRow = (material) => (
-    <>
+    <tr key={material.id} className="border-b border-border hover:bg-[hsl(205,30%,88%)] dark:hover:bg-[hsl(205,54%,20%)] transition-all duration-300 ease-in-out">
       <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{material.codeNumber}</td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">{material.availability || 'Both'}</td>
       <td className="px-6 py-4 text-sm text-foreground font-medium">{material.title}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{material.group}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{material.type}</td>
@@ -265,7 +272,7 @@ export default function IKSPCLPage() {
           )}
         </div>
       </td>
-    </>
+    </tr>
   )
 
   return (
@@ -344,14 +351,15 @@ export default function IKSPCLPage() {
         {/* Material Modal */}
         {(userRole === 'admin' || userRole === 'staff') && (
           <MaterialModal
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false)
-              setEditingMaterial(null)
-            }}
-            onSubmit={handleAddMaterial}
-            initialData={editingMaterial}
-          />
+              isOpen={isModalOpen}
+              onClose={() => {
+                setIsModalOpen(false)
+                setEditingMaterial(null)
+              }}
+              onSubmit={handleAddMaterial}
+              initialData={editingMaterial}
+              typeOptions={['IKSP', 'CL']}
+            />
         )}
       </div>
     </AppLayout>

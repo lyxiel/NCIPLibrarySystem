@@ -108,7 +108,7 @@ export default function BorrowingPage() {
       ]
 
   const renderRow = (borrowing) => (
-    <>
+    <tr key={borrowing.id} className="border-b border-border hover:bg-[hsl(205,30%,88%)] dark:hover:bg-[hsl(205,54%,20%)] transition-all duration-300 ease-in-out">
       {userRole !== 'user' && (
         <td className="px-6 py-4 text-sm text-foreground font-medium">
           {getMemberName(borrowing.memberId)}
@@ -136,7 +136,7 @@ export default function BorrowingPage() {
           </button>
         )}
       </td>
-    </>
+    </tr>
   )
 
   return (

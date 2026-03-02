@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth, db } from '@/lib/firebase'
+import { doc, getDoc } from 'firebase/firestore'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -13,13 +16,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [remember, setRemember] = useState(false)
 
-  const mockUsers = [
-    { role: 'admin', email: 'admin@ncip.gov.ph', password: 'admin123' },
-    { role: 'staff', email: 'staff@ncip.gov.ph', password: 'staff123' },
-    { role: 'user', email: 'user@ncip.gov.ph', password: 'user123' },
-  ]
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     if (!email || !password) {
@@ -28,53 +25,84 @@ export default function LoginPage() {
     }
 
     setLoading(true)
-    // simulate async auth
-    setTimeout(() => {
-      const user = mockUsers.find((u) => u.email === email && u.password === password)
-      if (user) {
-        localStorage.setItem('isLoggedIn', 'true')
-        localStorage.setItem('userRole', user.role)
-        if (remember) localStorage.setItem('rememberEmail', email)
-        router.push('/dashboard')
-      } else {
-        setError('Invalid credentials — try mock users below')
+    try {
+      // Sign in with Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+      
+      let userRole = 'user' // default role
+      
+      // Try to get user role from Firestore (optional)
+      try {
+        const userDocRef = doc(db, 'users', user.uid)
+        const userDoc = await getDoc(userDocRef)
+        
+        if (userDoc.exists()) {
+          userRole = userDoc.data().role || 'user'
+        }
+      } catch (firestoreErr) {
+        console.warn('Could not fetch user role from Firestore:', firestoreErr)
+        // Fallback: determine role from email domain
+        if (email.includes('admin@')) {
+          userRole = 'admin'
+        } else if (email.includes('staff@')) {
+          userRole = 'staff'
+        }
       }
+      
+      // Store user info in localStorage
+      localStorage.setItem('isLoggedIn', 'true')
+      localStorage.setItem('userRole', userRole)
+      localStorage.setItem('token', await user.getIdToken())
+      localStorage.setItem('uid', user.uid)
+      if (remember) localStorage.setItem('rememberEmail', email)
+      
+      // Redirect based on role
+      if (userRole === 'admin') {
+        router.push('/admin')
+      } else {
+        router.push('/dashboard')
+      }
+    } catch (err) {
+      console.error('Login error:', err)
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('Invalid email or password')
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Too many failed attempts. Please try again later.')
+      } else {
+        setError('Authentication failed. Please try again.')
+      }
+    } finally {
       setLoading(false)
-    }, 900)
+    }
   }
 
-  const autofillUser = (u) => {
-    setEmail(u.email)
-    setPassword(u.password)
-    setError('')
+  const autofillUser = (role) => {
+    const mockUsers = {
+      admin: { email: 'admin@ncip.gov.ph', password: 'admin123' },
+      staff: { email: 'staff@ncip.gov.ph', password: 'staff123' },
+      user: { email: 'user@ncip.gov.ph', password: 'user123' },
+    }
+    if (mockUsers[role]) {
+      setEmail(mockUsers[role].email)
+      setPassword(mockUsers[role].password)
+      setError('')
+    }
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--primary))] bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent-blue))] flex items-center justify-center p-4">
+    <div className="h-screen overflow-hidden bg-[hsl(var(--primary))] bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent-blue))] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">NCIP</h1>
-          <p className="text-[rgba(255,255,255,0.9)] text-sm md:text-base">Library Management System</p>
-          <p className="text-[rgba(255,255,255,0.85)] text-xs md:text-sm mt-2">National Commission on Indigenous Peoples</p>
-          <div className="mt-3 flex items-center justify-center gap-2">
-            <small className="text-xs text-[rgba(255,255,255,0.8)]">Quick mock users:</small>
-            {mockUsers.map((u) => (
-              <button
-                key={u.role}
-                onClick={() => autofillUser(u)}
-                className="text-xs bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-md transition"
-              >
-                {u.role}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Login Form Card */}
         <div className="bg-white rounded-xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-foreground mb-2">Welcome Back</h2>
-          <p className="text-muted-foreground mb-6">Sign in to access the library system</p>
+          <div className="flex justify-center mb-6">
+            <img src="/Logo/R.png" alt="NCIP Logo" className="h-16 w-16 object-contain" />
+          </div>
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-foreground mb-2">NCIP</h1>
+            <p className="text-foreground text-sm">Library Management System</p>
+            <p className="text-muted-foreground text-xs mt-1">National Commission on Indigenous Peoples</p>
+          </div>
 
           {error && (
             <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">

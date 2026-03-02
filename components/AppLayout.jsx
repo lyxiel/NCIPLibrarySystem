@@ -5,6 +5,7 @@ import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import InfoModal from './InfoModal'
+import { Toaster } from './ui/toaster'
 
 const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -62,6 +63,7 @@ const AppLayout = ({ children }) => {
         </div>
       </div>
       <Footer />
+      <Toaster />
       <InfoModal open={modalOpen} type={modalType} onClose={() => setModalOpen(false)} />
     </div>
   )

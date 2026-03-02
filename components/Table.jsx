@@ -24,9 +24,8 @@ const Table = ({ columns, data, renderRow }) => {
             </tr>
           ) : (
             data.map((row, index) => (
-              <tr key={index} className="border-b border-border hover:bg-[hsl(205,30%,88%)] dark:hover:bg-[hsl(205,54%,20%)] transition-all duration-300 ease-in-out">
-                {renderRow(row)}
-              </tr>
+              // `renderRow` now returns the complete `<tr>` element for each row
+              renderRow(row)
             ))
           )}
         </tbody>

@@ -7,12 +7,14 @@ import GuestHeader from '@/components/GuestHeader'
 import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import BookModal from '@/components/BookModal'
-import { mockBooks } from '@/lib/mockData'
+import { db } from '@/lib/firebase'
+import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { Plus, Search, Edit, Trash2, Grid3x3, List, BookOpen, FileUp, Check } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 
 export default function BooksPage() {
   const router = useRouter()
-  const [books, setBooks] = useState(mockBooks)
+  const [books, setBooks] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -29,6 +31,39 @@ export default function BooksPage() {
     setIsLoggedIn(loggedIn)
   }, [])
 
+  // Load books from Firestore on page load
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'books'))
+        const fbBooks = snapshot.docs.map((d) => {
+          const data = d.data() || {}
+          return {
+            id: d.id,
+            code: data.code || '',
+            resourceType: data.resourceType || '',
+            title: data.title || '',
+            author: data.author || '',
+            publisher: data.publisher || '',
+            subject: data.subject || '',
+            datePublished: data.datePublished || '',
+            copies: data.copies || 0,
+            status: data.status || (data.availability === 'Hardcopy' ? 'Available' : 'Available'),
+            dateAdded: data.dateAdded || '',
+            availability: data.availability || 'Both',
+            keywords: data.keywords || '',
+          }
+        })
+        // Always replace local state with Firestore results (empty array allowed)
+        setBooks(fbBooks)
+      } catch (err) {
+        console.error('Error fetching books from Firestore:', err)
+      }
+    }
+
+    fetchBooks()
+  }, [])
+
   const filteredBooks = books.filter((book) => {
     const matchesSearch =
       book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,23 +76,72 @@ export default function BooksPage() {
     return matchesSearch && matchesStatus
   })
 
-  const handleAddBook = (formData) => {
+  const handleAddBook = async (formData) => {
+    // If editing an existing local-only book
     if (editingBook) {
-      setBooks(
-        books.map((book) =>
-          book.id === editingBook.id ? { ...formData, id: editingBook.id } : book
+      // If editing an existing Firestore document, update it
+      try {
+        if (editingBook.id) {
+          const bookRef = doc(db, 'books', String(editingBook.id))
+          await updateDoc(bookRef, {
+            ...formData,
+            copies: Number(formData.copies) || 0,
+          })
+        }
+
+        // Update local state
+        setBooks(
+          books.map((book) =>
+            book.id === editingBook.id ? { ...formData, id: editingBook.id } : book
+          )
         )
-      )
-      setEditingBook(null)
-    } else {
+        setEditingBook(null)
+        setIsModalOpen(false)
+
+        // Notify user
+        try {
+          toast({ title: 'Book updated', description: `${formData.title || 'Book'} updated successfully.` })
+        } catch (e) {
+          // ignore toast errors
+        }
+
+        return
+      } catch (err) {
+        console.error('Error updating book in Firestore:', err)
+        alert('Failed to update book. Check console for details.')
+        return
+      }
+    }
+
+    // Create a new document in Firestore 'books' collection
+    try {
+      const docRef = await addDoc(collection(db, 'books'), {
+        ...formData,
+        copies: Number(formData.copies) || 0,
+        dateAdded: new Date().toISOString().split('T')[0],
+        createdAt: serverTimestamp(),
+      })
+
       const newBook = {
         ...formData,
-        id: Math.max(...books.map((b) => b.id), 0) + 1,
+        id: docRef.id,
+        copies: Number(formData.copies) || 0,
         dateAdded: new Date().toISOString().split('T')[0],
       }
+
       setBooks([...books, newBook])
+      setIsModalOpen(false)
+
+      // Notify user
+      try {
+        toast({ title: 'Book added', description: `${formData.title || 'Book'} added successfully.` })
+      } catch (e) {
+        // ignore toast errors
+      }
+    } catch (err) {
+      console.error('Error saving book to Firestore:', err)
+      alert('Failed to save book. Check console for details.')
     }
-    setIsModalOpen(false)
   }
 
   const handleEditBook = (book) => {
@@ -65,9 +149,32 @@ export default function BooksPage() {
     setIsModalOpen(true)
   }
 
-  const handleDeleteBook = (bookId) => {
-    if (confirm('Are you sure you want to delete this book?')) {
+  const handleDeleteBook = async (bookId) => {
+    if (!confirm('Are you sure you want to delete this book?')) return
+
+    // Optimistically remove from UI after successful delete (or local-only)
+    try {
+      // capture title for toast
+      const book = books.find((b) => b.id === bookId)
+      const title = book?.title || 'Book'
+
+      // If bookId looks like a Firestore doc id (string), attempt to delete from Firestore
+      if (typeof bookId === 'string') {
+        await deleteDoc(doc(db, 'books', String(bookId)))
+      }
+
+      // Remove from local state regardless
       setBooks(books.filter((book) => book.id !== bookId))
+
+      // Notify user
+      try {
+        toast({ title: 'Book deleted', description: `${title} deleted successfully.`, variant: 'destructive' })
+      } catch (e) {
+        // ignore
+      }
+    } catch (err) {
+      console.error('Error deleting book from Firestore:', err)
+      alert('Failed to delete book. Check console for details.')
     }
   }
 
@@ -156,12 +263,13 @@ export default function BooksPage() {
     { key: 'subject', label: 'Subject', width: '12%' },
     { key: 'datePublished', label: 'Date Published', width: '10%' },
     { key: 'copies', label: 'Number of Copies', width: '8%' },
-    { key: 'status', label: 'Availability', width: '10%' },
+    { key: 'availability', label: 'Availability', width: '10%' },
+    { key: 'status', label: 'Status', width: '10%' },
     { key: 'actions', label: 'Actions', width: '8%' },
   ]
 
   const renderRow = (book) => (
-    <>
+    <tr key={book.id} className="border-b border-border hover:bg-[hsl(205,30%,88%)] dark:hover:bg-[hsl(205,54%,20%)] transition-all duration-300 ease-in-out">
       <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{book.code}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.resourceType}</td>
       <td className="px-6 py-4 text-sm text-foreground font-medium">{book.title}</td>
@@ -170,6 +278,7 @@ export default function BooksPage() {
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.subject}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.datePublished}</td>
       <td className="px-6 py-4 text-sm text-foreground font-medium text-center">{book.copies}</td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">{book.availability || 'Both'}</td>
       <td className="px-6 py-4 text-sm">
         <StatusBadge status={book.status} />
       </td>
@@ -208,7 +317,7 @@ export default function BooksPage() {
           )}
         </div>
       </td>
-    </>
+    </tr>
   )
 
   return (

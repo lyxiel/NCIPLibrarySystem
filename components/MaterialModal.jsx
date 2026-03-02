@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Lock, AlertTriangle } from 'lucide-react'
 
-const MaterialModal = ({ isOpen, onClose, onSubmit, initialData }) => {
+const MaterialModal = ({ isOpen, onClose, onSubmit, initialData, typeOptions = ['IKSP', 'CL', 'Both'] }) => {
   const [formData, setFormData] = useState({
     codeNumber: '',
     region: '',
@@ -12,7 +12,8 @@ const MaterialModal = ({ isOpen, onClose, onSubmit, initialData }) => {
     barangay: '',
     group: '',
     title: '',
-    type: 'IKSP',
+    type: typeOptions && typeOptions.length ? typeOptions[0] : 'IKSP',
+    availability: 'Both',
     copies: 1,
     lastUpdated: new Date().toISOString().split('T')[0],
     subject: '',
@@ -35,7 +36,8 @@ const MaterialModal = ({ isOpen, onClose, onSubmit, initialData }) => {
         barangay: '',
         group: '',
         title: '',
-        type: 'IKSP',
+        type: typeOptions && typeOptions.length ? typeOptions[0] : 'IKSP',
+        availability: 'Both',
         copies: 1,
         lastUpdated: new Date().toISOString().split('T')[0],
         subject: '',
@@ -67,8 +69,9 @@ const MaterialModal = ({ isOpen, onClose, onSubmit, initialData }) => {
     'ARMM (Autonomous Region)',
   ]
 
-  const types = ['IKSP', 'CL', 'Both']
+  const types = typeOptions
   const sensitivities = ['Public', 'Restricted', 'Sacred']
+  const availabilities = ['Hardcopy', 'Softcopy', 'Both']
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -290,7 +293,7 @@ const MaterialModal = ({ isOpen, onClose, onSubmit, initialData }) => {
               </select>
               {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
             </div>
-
+            
             <div>
               <label className="block text-sm font-semibold text-foreground mb-2">
                 Number of Copies <span className="text-red-500">*</span>
@@ -307,6 +310,23 @@ const MaterialModal = ({ isOpen, onClose, onSubmit, initialData }) => {
               />
               {errors.copies && <p className="text-red-500 text-xs mt-1">{errors.copies}</p>}
             </div>
+          </div>
+
+          {/* Availability */}
+          <div>
+            <label className="block text-sm font-semibold text-foreground mb-2">
+              Availability
+            </label>
+            <select
+              name="availability"
+              value={formData.availability}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+            >
+              {availabilities.map((a) => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
           </div>
 
           {/* Last Updated and Subject Row */}

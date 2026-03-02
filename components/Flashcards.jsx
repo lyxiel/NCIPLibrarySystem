@@ -17,29 +17,6 @@ export default function Flashcards({ className = '' }) {
 
   return (
     <section className={`min-h-screen w-full ${className}`}>
-      {/* Top Navigation - About, Browse Materials, Login */}
-      <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-end gap-4 items-center">
-        <button
-          onClick={() => openCard('about')}
-          className="px-5 py-2 rounded-md font-semibold text-black hover:text-[#0B3C5D] transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
-        >
-          About
-        </button>
-        <Link
-          href="/books"
-          className="px-5 py-2 rounded-md font-semibold border-2 border-[#0B3C5D] text-black hover:bg-[#0B3C5D] hover:text-white transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
-        >
-          Browse Materials
-        </Link>
-        <Link
-          href="/login"
-          className="px-5 py-2 rounded-md font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
-          style={{ backgroundColor: '#0B3C5D' }}
-        >
-          Login / Sign In
-        </Link>
-      </nav>
-
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center mb-16">

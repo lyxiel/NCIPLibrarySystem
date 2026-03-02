@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Helper function to check if user is staff or admin
+    function isStaffOrAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'staff'];
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Allow users to read their own document
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Allow admins to read/write any user document
+      allow read, write: if isAdmin();
+      
+      // Allow user creation during signup
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Books collection
+    match /books/{bookId} {
+      // Anyone authenticated can read books
+      allow read: if isAuthenticated();
+      
+      // Only staff and admins can create/update/delete books
+      allow write: if isStaffOrAdmin();
+    }
+    
+    // Borrowing/Transactions collection
+    match /transactions/{transactionId} {
+      // Users can read their own transactions
+      allow read: if isAuthenticated() && 
+                     (resource.data.userId == request.auth.uid || isStaffOrAdmin());
+      
+      // Only staff and admins can create/update transactions
+      allow write: if isStaffOrAdmin();
+    }
+    
+    // Members collection
+    match /members/{memberId} {
+      // Members can read their own data
+      allow read: if isAuthenticated() && request.auth.uid == memberId;
+      
+      // Staff and admins can read/write all members
+      allow read, write: if isStaffOrAdmin();
+    }
+    
+    // Settings/System collections (admin only)
+    match /settings/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Activity logs (read-only for staff, write by system)
+    match /activityLogs/{logId} {
+      allow read: if isStaffOrAdmin();
+      allow create: if isAuthenticated();
+    }
+  }
+}
