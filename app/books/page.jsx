@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
 import GuestHeader from '@/components/GuestHeader'
 import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import BookModal from '@/components/BookModal'
+import MaterialInfoModal from '@/components/MaterialInfoModal'
 import { db } from '@/lib/firebase'
 import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { Plus, Search, Edit, Trash2, Grid3x3, List, BookOpen, FileUp, Check } from 'lucide-react'
@@ -19,10 +20,14 @@ export default function BooksPage() {
   const [filterStatus, setFilterStatus] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingBook, setEditingBook] = useState(null)
+  const [selectedBook, setSelectedBook] = useState(null)
   const [viewMode, setViewMode] = useState('table') // 'table' or 'grid'
   const [userRole, setUserRole] = useState('user')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [borrowedBooks, setBorrowedBooks] = useState([])
+  const [showAccountPrompt, setShowAccountPrompt] = useState(false)
+  const [pendingBorrowBookId, setPendingBorrowBookId] = useState(null)
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     const role = localStorage.getItem('userRole') || 'user'
@@ -30,6 +35,22 @@ export default function BooksPage() {
     setUserRole(role)
     setIsLoggedIn(loggedIn)
   }, [])
+
+  // If redirected from login with next params to perform borrow, handle it
+  useEffect(() => {
+    try {
+      const action = searchParams?.get('action')
+      const bookIdParam = searchParams?.get('bookId')
+      if (action === 'borrow' && bookIdParam && isLoggedIn) {
+        const id = isNaN(Number(bookIdParam)) ? bookIdParam : (Number(bookIdParam))
+        performBorrow(id)
+        // remove query by replacing to /books
+        router.replace('/books')
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [searchParams, isLoggedIn, router])
 
   // Load books from Firestore on page load
   useEffect(() => {
@@ -218,17 +239,21 @@ export default function BooksPage() {
   }
 
   const handleBorrowBook = (bookId) => {
-    // Check if user is logged in
-    const isLoggedIn = localStorage.getItem('isLoggedIn')
-    if (!isLoggedIn) {
-      alert('Please log in to borrow books.')
-      router.push('/login')
+    const logged = !!localStorage.getItem('isLoggedIn')
+    if (!logged) {
+      // Show a prompt asking if user has account
+      setPendingBorrowBookId(bookId)
+      setShowAccountPrompt(true)
       return
     }
 
+    performBorrow(bookId)
+  }
+
+  const performBorrow = (bookId) => {
     const book = books.find(b => b.id === bookId)
     if (!book) return
-    
+
     if (book.status !== 'Available') {
       alert('This book is not available for borrowing at the moment.')
       return
@@ -236,22 +261,35 @@ export default function BooksPage() {
 
     const dueDate = new Date()
     dueDate.setDate(dueDate.getDate() + 14) // 2 weeks borrowing period
-    
+
     const borrowRecord = {
       bookId,
       bookTitle: book.title,
       borrowDate: new Date().toISOString().split('T')[0],
       dueDate: dueDate.toISOString().split('T')[0],
     }
-    
-    setBorrowedBooks([...borrowedBooks, borrowRecord])
-    
+
+    setBorrowedBooks((prev) => [...prev, borrowRecord])
+
     // Update book status to borrowed
-    setBooks(books.map(b => 
-      b.id === bookId ? { ...b, status: 'Borrowed' } : b
-    ))
-    
+    setBooks((prev) => prev.map(b => b.id === bookId ? { ...b, status: 'Borrowed' } : b))
+
     alert(`Successfully borrowed "${book.title}". Due date: ${borrowRecord.dueDate}`)
+  }
+
+  const handlePromptSignIn = () => {
+    const next = encodeURIComponent(`/books?action=borrow&bookId=${pendingBorrowBookId}`)
+    router.push(`/login?mode=signin&next=${next}`)
+  }
+
+  const handlePromptSignUp = () => {
+    const next = encodeURIComponent(`/books?action=borrow&bookId=${pendingBorrowBookId}`)
+    router.push(`/login?mode=signup&next=${next}`)
+  }
+
+  const handlePromptCancel = () => {
+    setShowAccountPrompt(false)
+    setPendingBorrowBookId(null)
   }
 
   const columns = [
@@ -272,7 +310,7 @@ export default function BooksPage() {
     <tr key={book.id} className="border-b border-border hover:bg-[hsl(205,30%,88%)] dark:hover:bg-[hsl(205,54%,20%)] transition-all duration-300 ease-in-out">
       <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{book.code}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.resourceType}</td>
-      <td className="px-6 py-4 text-sm text-foreground font-medium">{book.title}</td>
+      <td className="px-6 py-4 text-sm text-foreground font-medium cursor-pointer" onClick={() => setSelectedBook(book)}>{book.title}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.author}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.publisher}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.subject}</td>
@@ -323,6 +361,22 @@ export default function BooksPage() {
   return (
     <AppLayout>
       <GuestHeader />
+      {showAccountPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={handlePromptCancel} />
+          <div className="relative z-60 max-w-md w-full mx-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-6">
+              <h3 className="text-lg font-bold mb-2">Sign in to borrow</h3>
+              <p className="text-sm text-muted-foreground mb-4">Do you already have an account with NCIP Library?</p>
+              <div className="flex gap-2 justify-end">
+                <button onClick={handlePromptCancel} className="px-3 py-2 rounded-lg bg-background border border-border">Cancel</button>
+                <button onClick={handlePromptSignUp} className="px-3 py-2 rounded-lg bg-primary text-white">No — Create account</button>
+                <button onClick={handlePromptSignIn} className="px-3 py-2 rounded-lg bg-secondary text-foreground">Yes — Sign in</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="space-y-6">
         {/* Header with Title and Action Button */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -427,7 +481,8 @@ export default function BooksPage() {
             {filteredBooks.map((book) => (
               <div
                 key={book.id}
-                className="card-elevated group overflow-hidden flex flex-col h-full"
+                className="card-elevated group overflow-hidden flex flex-col h-full cursor-pointer"
+                onClick={() => setSelectedBook(book)}
               >
                 {/* Book Cover Placeholder */}
                 <div className="w-full h-40 bg-gradient-to-br from-primary to-accent-blue rounded-lg mb-4 flex items-center justify-center">
@@ -455,7 +510,7 @@ export default function BooksPage() {
                 {/* Quick Actions */}
                 <div className="flex gap-2 pt-4 border-t border-border">
                   <button
-                    onClick={() => handleEditBook(book)}
+                    onClick={(e) => { e.stopPropagation(); handleEditBook(book) }}
                     className="flex-1 py-2 px-3 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium text-sm transition-smooth flex items-center justify-center gap-1"
                     title="Edit"
                   >
@@ -463,7 +518,7 @@ export default function BooksPage() {
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteBook(book.id)}
+                    onClick={(e) => { e.stopPropagation(); handleDeleteBook(book.id) }}
                     className="flex-1 py-2 px-3 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-medium text-sm transition-smooth flex items-center justify-center gap-1"
                     title="Delete"
                   >
@@ -483,6 +538,13 @@ export default function BooksPage() {
         )}
 
         {/* Book Modal */}
+        <MaterialInfoModal
+          isOpen={!!selectedBook}
+          onClose={() => setSelectedBook(null)}
+          book={selectedBook}
+          onBorrow={handleBorrowBook}
+          userRole={userRole}
+        />
         {(userRole === 'admin' || userRole === 'staff') && (
           <BookModal
             isOpen={isModalOpen}
@@ -498,3 +560,4 @@ export default function BooksPage() {
     </AppLayout>
   )
 }
+

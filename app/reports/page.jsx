@@ -1,201 +1,172 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
-import StatusBadge from '@/components/StatusBadge'
-import { mockReports } from '@/lib/mockData'
-import { BarChart3, Download, Plus, X } from 'lucide-react'
+import { mockBooks, mockActivityLog } from '@/lib/mockData'
 
 export default function ReportsPage() {
   const router = useRouter()
-  const [reports, setReports] = useState(mockReports)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [formData, setFormData] = useState({
-    title: '',
-    type: 'Circulation',
-  })
+  const [resultRows, setResultRows] = useState(null)
+  const [reportName, setReportName] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn')
     const role = localStorage.getItem('userRole')
-    
     if (!isLoggedIn) {
       router.push('/login')
       return
     }
-
-    // Only ADMIN can access this page
     if (role !== 'admin') {
       router.push('/dashboard')
       return
     }
   }, [router])
 
-  const handleGenerateReport = (e) => {
-    e.preventDefault()
-    const newReport = {
-      id: Math.max(...reports.map((r) => r.id), 0) + 1,
-      ...formData,
-      date: new Date().toISOString().split('T')[0],
-      status: 'Published',
-    }
-    setReports([...reports, newReport])
-    setFormData({ title: '', type: 'Circulation' })
-    setIsModalOpen(false)
+  const downloadCSV = (rows = [], filename = 'report.csv') => {
+    if (!rows || rows.length === 0) return
+    const keys = Object.keys(rows[0])
+    const csv = [keys.join(',')].concat(rows.map(r => keys.map(k => `"${String(r[k] ?? '')}"`).join(','))).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
   }
 
-  const reportTypes = [
-    { type: 'Circulation', description: 'Book circulation metrics and statistics' },
-    { type: 'Collection', description: 'Collection development and inventory' },
-    { type: 'Analytics', description: 'Member engagement and usage analytics' },
-  ]
+  // 1) Collection report: summarize policy docs, research studies, reference materials
+  const generateCollectionReport = () => {
+    // For demo, we treat all mockBooks as part of the collection; in production filter by type/tag
+    const rows = mockBooks.map(b => ({ id: b.id, title: b.title, resourceType: b.resourceType || 'Unknown', datePublished: b.datePublished || '', status: b.status || '' }))
+    setReportName('Collection Report')
+    setResultRows(rows)
+  }
+
+  // 2) Categorized counts: number of resources per category, year, access level (access level assumed 'public' when missing)
+  const generateCategorizedCounts = () => {
+    const byCategory = {}
+    const byYear = {}
+    const byAccess = {}
+    mockBooks.forEach(b => {
+      const c = b.resourceType || 'Unknown'
+      const y = (b.datePublished || '').split('-')[0] || 'Unknown'
+      const a = b.accessLevel || 'public'
+      byCategory[c] = (byCategory[c] || 0) + 1
+      byYear[y] = (byYear[y] || 0) + 1
+      byAccess[a] = (byAccess[a] || 0) + 1
+    })
+    const rows = []
+    Object.keys(byCategory).forEach(k => rows.push({ metric: `Category:${k}`, count: byCategory[k] }))
+    Object.keys(byYear).forEach(k => rows.push({ metric: `Year:${k}`, count: byYear[k] }))
+    Object.keys(byAccess).forEach(k => rows.push({ metric: `Access:${k}`, count: byAccess[k] }))
+    setReportName('Categorized Counts')
+    setResultRows(rows)
+  }
+
+  // (Monthly delta removed per request)
+
+  // 4) Usage/access report: identify most accessed resources (simple count from activity log)
+  const generateUsageReport = () => {
+    const counts = {}
+    const titleRegex = /"([^"]+)"/g
+    mockActivityLog.forEach(a => {
+      const matches = [...(a.description.matchAll(titleRegex) || [])]
+      matches.forEach(m => { counts[m[1]] = (counts[m[1]] || 0) + 1 })
+    })
+    const rows = Object.keys(counts).map(k => ({ title: k, accesses: counts[k] })).sort((a,b) => b.accesses - a.accesses)
+    setReportName('Usage & Access Report')
+    setResultRows(rows)
+  }
+
+  // 5) Real-time report: generate by date range for activity and resources
+  const generateRealTimeReport = () => {
+    if (!startDate || !endDate) {
+      alert('Please select start and end dates')
+      return
+    }
+    const s = new Date(startDate)
+    const e = new Date(endDate)
+    // activities in range
+    const activities = mockActivityLog.filter(a => {
+      const t = new Date(a.timestamp)
+      return t >= s && t <= e
+    }).map(a => ({ action: a.action, description: a.description, timestamp: a.timestamp }))
+    setReportName(`Real-time Report (${startDate} → ${endDate})`)
+    setResultRows(activities)
+  }
 
   return (
     <AppLayout>
-      <div>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Reports</h1>
-            <p className="text-muted-foreground">View and generate library reports and analytics</p>
-          </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="w-full md:w-auto flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform font-semibold active:scale-95"
-          >
-            <Plus size={20} />
-            Generate Report
-          </button>
-        </div>
+      <div className="max-w-6xl mx-auto p-4">
+        <h1 className="text-2xl md:text-3xl font-bold mb-4">Reports — NKLS (Admin)</h1>
 
-        {/* Report Templates Section */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Report Templates</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {reportTypes.map((report) => (
-              <div key={report.type} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-primary">
-                <div className="flex items-start justify-between mb-3">
-                  <BarChart3 className="text-primary" size={24} />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">{report.type} Report</h3>
-                <p className="text-sm text-muted-foreground mb-4">{report.description}</p>
-                <button
-                  onClick={() => {
-                    setFormData({ title: `${report.type} Report - ${new Date().toLocaleDateString()}`, type: report.type })
-                    setIsModalOpen(true)
-                  }}
-                  className="w-full bg-primary text-primary-foreground py-2 rounded-lg hover:bg-secondary transition-colors text-sm font-semibold"
-                >
-                  Generate
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Reports Section */}
-        <div>
-          <h2 className="text-xl font-bold text-foreground mb-4">Recent Reports</h2>
-          <div className="overflow-x-auto bg-white rounded-lg shadow-md">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-primary text-primary-foreground border-b border-border">
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Report Title</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Type</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map((report, index) => (
-                  <tr key={index} className="border-b border-border hover:bg-muted transition-colors">
-                    <td className="px-6 py-4 text-sm text-foreground font-medium">{report.title}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{report.type}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{report.date}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <StatusBadge status={report.status} />
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <button className="flex items-center gap-2 text-blue-500 hover:text-blue-700 transition-colors font-semibold">
-                        <Download size={18} />
-                        Download
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Generate Report Modal */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-foreground">Generate Report</h2>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <form onSubmit={handleGenerateReport} className="space-y-4">
-                {/* Report Title */}
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Report Title</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Enter report title"
-                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                    required
-                  />
-                </div>
-
-                {/* Report Type */}
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Report Type</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                  >
-                    <option value="Circulation">Circulation Report</option>
-                    <option value="Collection">Collection Development</option>
-                    <option value="Analytics">Member Analytics</option>
-                  </select>
-                </div>
-
-                {/* Info Message */}
-                <p className="text-sm text-muted-foreground bg-blue-50 p-3 rounded-lg">
-                  Report will be generated with current library data and can be downloaded as PDF or Excel format.
-                </p>
-
-                {/* Buttons */}
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-secondary transition-colors"
-                  >
-                    Generate
-                  </button>
-                </div>
-              </form>
+        <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h3 className="text-base md:text-lg font-semibold">Available reports</h3>
+              <p className="text-sm text-muted-foreground">Choose a report type or run a real-time activity report.</p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button onClick={generateCollectionReport} className="px-4 py-2 bg-primary text-primary-foreground rounded shadow-sm hover:shadow-md hover:text-white">Collection Report</button>
+              <button onClick={generateCategorizedCounts} className="px-4 py-2 bg-primary text-primary-foreground rounded shadow-sm hover:shadow-md hover:text-white">Categorized Counts</button>
+              <button onClick={generateUsageReport} className="px-4 py-2 bg-primary text-primary-foreground rounded shadow-sm hover:shadow-md hover:text-white">Usage & Access</button>
             </div>
           </div>
-        )}
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label htmlFor="report-start-date" className="text-xs text-muted-foreground mb-1 block">Start date</label>
+              <input id="report-start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="px-3 py-2 border border-border rounded w-full" />
+            </div>
+
+            <div>
+              <label htmlFor="report-end-date" className="text-xs text-muted-foreground mb-1 block">End date</label>
+              <input id="report-end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="px-3 py-2 border border-border rounded w-full" />
+            </div>
+
+            <div className="flex items-center justify-end">
+              <button onClick={generateRealTimeReport} className="px-4 py-2 bg-primary text-primary-foreground rounded w-full sm:w-auto hover:text-white">Generate Real-time</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+          <div className="flex items-start justify-between mb-3">
+            <h2 className="text-lg font-semibold">{reportName || 'No report generated yet'}</h2>
+            {resultRows && resultRows.length > 0 && (
+              <button onClick={() => downloadCSV(resultRows, `${reportName.replace(/\s+/g,'-').toLowerCase() || 'report'}.csv`)} className="text-sm text-blue-600">Export CSV</button>
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            {resultRows && resultRows.length > 0 ? (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b">
+                    {Object.keys(resultRows[0]).map((k) => (
+                      <th key={k} className="px-3 py-2 font-medium text-xs uppercase tracking-wide">{k}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {resultRows.map((r, i) => (
+                    <tr key={i} className="bg-white">
+                      {Object.keys(r).map((k) => (
+                        <td key={k} className="px-3 py-3 align-top text-sm text-foreground">{String(r[k])}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-sm text-muted-foreground">Use the buttons above to generate a report.</p>
+            )}
+          </div>
+        </div>
       </div>
     </AppLayout>
   )

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Logo from './Logo'
+import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 
 export default function Header() {
@@ -32,20 +33,27 @@ export default function Header() {
             {/* Logo on the left (smaller) */}
             <Logo />
 
-            {/* Top-right navigation for landing only */}
-            <nav className="flex items-center gap-3">
-              <button
-                onClick={() => window.dispatchEvent(new CustomEvent('openInfoCard', { detail: { type: 'about' } }))}
-                className="px-3 py-1.5 rounded-md font-semibold text-sm text-black hover:text-[#0B3C5D] transition-all duration-200 hover:shadow-sm active:scale-95 cursor-pointer"
+            {/* Top Navigation - About, Browse Materials, Login */}
+            <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-end gap-4 items-center">
+              <Link
+                href="/about"
+                className="px-5 py-2 rounded-md font-semibold text-black hover:text-[#0B3C5D] transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
               >
                 About
-              </button>
-
-              <a href="/books" className="px-3 py-1.5 rounded-md text-sm font-semibold border-2 border-[#0B3C5D] text-black hover:bg-[#0B3C5D] hover:text-white transition-all duration-200 hover:shadow-sm active:scale-95 cursor-pointer">Browse Materials</a>
-
-              <a href="/login" className="px-3 py-1.5 rounded-md text-sm font-semibold text-white transition-all duration-200 hover:shadow-sm active:scale-95 cursor-pointer" style={{ backgroundColor: '#0B3C5D' }}>
+              </Link>
+              <Link
+                href="/books"
+                className="px-5 py-2 rounded-md font-semibold border-2 border-[#0B3C5D] text-black hover:bg-[#0B3C5D] hover:text-white transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
+              >
+                Browse Materials
+              </Link>
+              <Link
+                href="/login"
+                className="px-5 py-2 rounded-md font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
+                style={{ backgroundColor: '#0B3C5D' }}
+              >
                 Login / Sign In
-              </a>
+              </Link>
             </nav>
           </div>
         </div>

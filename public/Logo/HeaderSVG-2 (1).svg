@@ -275,7 +275,10 @@
     <path class="cls-2" d="m33.16,31.23s0,0,0,.01c0,0,0,.01,0,.02,0,0,0,0,0,0-.02,0-.03.01-.05.01s-.02-.02-.02-.04c0,0,0-.01,0-.02.02,0,.03,0,.05-.01,0,0,.02,0,.02.02Z"/>
     <path class="cls-2" d="m33.29,31.12s-.04,0-.04-.02c0-.02.03-.02.04-.05.01,0,.02,0,.02.03v.04h-.02Z"/>
   </g>
-  <text class="cls-4" transform="translate(71.86 46.93)"><tspan class="cls-10" x="0" y="0">N</tspan><tspan class="cls-11" x="8.6" y="0">A</tspan><tspan x="16" y="0">TIO</tspan><tspan class="cls-10" x="36.31" y="0">N</tspan><tspan x="44.9" y="0">AL COMMISSION ON INDIGENOUS PEOPLES</tspan></text>
+  <text class="cls-4" transform="translate(71.86 46.93)">
+    <tspan x="0" y="0">OFFICE ON POLICY,</tspan>
+    <tspan x="0" y="14">PLANNING &amp; RESEARCH</tspan>
+  </text>
   <text class="cls-6" transform="translate(71.86 23.03)"><tspan x="0" y="0">REPUBLIC OF</tspan><tspan class="cls-13" x="62.67" y="0"> </tspan><tspan x="65.11" y="0">THE PHILIPPINES</tspan></text>
   <text class="cls-6" transform="translate(71.86 34.69)"><tspan x="0" y="0">OFFICE OF</tspan><tspan class="cls-13" x="50.12" y="0"> </tspan><tspan class="cls-14" x="52.56" y="0">THE PRESIDEN</tspan><tspan class="cls-13" x="122.02" y="0">T</tspan></text>
 </svg>

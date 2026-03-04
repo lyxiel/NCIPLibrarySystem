@@ -1,71 +1,102 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(false)
   const [remember, setRemember] = useState(false)
+  const [nextPath, setNextPath] = useState('')
+
+  useEffect(() => {
+    try {
+      const mode = searchParams?.get('mode')
+      const next = searchParams?.get('next')
+      if (mode === 'signup') setIsSignUp(true)
+      if (mode === 'signin') setIsSignUp(false)
+      if (next) setNextPath(next)
+    } catch (e) {
+      // ignore in SSR/no-search param environment
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (!email || !password) {
-      setError('Please enter email and password')
+    if (!email || !password || (isSignUp && !name)) {
+      setError('Please enter name, email and password')
       return
     }
 
     setLoading(true)
     try {
-      // Sign in with Firebase Authentication
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      const user = userCredential.user
-      
-      let userRole = 'user' // default role
-      
-      // Try to get user role from Firestore (optional)
+      let userCredential
+      let user
+      if (isSignUp) {
+        // Create new user
+        userCredential = await createUserWithEmailAndPassword(auth, email, password)
+        user = userCredential.user
+
+        // Create user profile in Firestore
+        const userDocRef = doc(db, 'users', user.uid)
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          name,
+          email,
+          role: 'user',
+          createdAt: serverTimestamp(),
+        })
+      } else {
+        // Sign in existing user
+        userCredential = await signInWithEmailAndPassword(auth, email, password)
+        user = userCredential.user
+      }
+
+      let userRole = 'user'
       try {
         const userDocRef = doc(db, 'users', user.uid)
         const userDoc = await getDoc(userDocRef)
-        
-        if (userDoc.exists()) {
-          userRole = userDoc.data().role || 'user'
-        }
+        if (userDoc.exists()) userRole = userDoc.data().role || 'user'
       } catch (firestoreErr) {
         console.warn('Could not fetch user role from Firestore:', firestoreErr)
-        // Fallback: determine role from email domain
-        if (email.includes('admin@')) {
-          userRole = 'admin'
-        } else if (email.includes('staff@')) {
-          userRole = 'staff'
-        }
+        if (email.includes('admin@')) userRole = 'admin'
+        else if (email.includes('staff@')) userRole = 'staff'
       }
-      
+
       // Store user info in localStorage
       localStorage.setItem('isLoggedIn', 'true')
       localStorage.setItem('userRole', userRole)
       localStorage.setItem('token', await user.getIdToken())
       localStorage.setItem('uid', user.uid)
       if (remember) localStorage.setItem('rememberEmail', email)
-      
-      // Redirect based on role
-      if (userRole === 'admin') {
-        router.push('/admin')
-      } else {
-        router.push('/dashboard')
+
+      // Redirect: respect `next` param when present
+      if (nextPath) {
+        router.push(nextPath)
+        return
       }
+
+      if (userRole === 'admin') router.push('/admin')
+      else router.push('/dashboard')
     } catch (err) {
       console.error('Login error:', err)
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Email already in use. Please sign in instead.')
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password is too weak. Use at least 6 characters.')
+      } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('Invalid email or password')
       } else if (err.code === 'auth/too-many-requests') {
         setError('Too many failed attempts. Please try again later.')
@@ -101,7 +132,7 @@ export default function LoginPage() {
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-foreground mb-2">NCIP</h1>
             <p className="text-foreground text-sm">Library Management System</p>
-            <p className="text-muted-foreground text-xs mt-1">National Commission on Indigenous Peoples</p>
+            <p className="text-muted-foreground text-xs mt-1">Office On Policy, Planning and Research</p>
           </div>
 
           {error && (
@@ -111,6 +142,35 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Mode Toggle */}
+            <div className="text-sm text-center mb-2">
+              {isSignUp ? (
+                <>
+                  <span>Already have an account?</span>
+                  <button type="button" onClick={() => { setIsSignUp(false); setError('') }} className="ml-2 text-primary underline">Sign in</button>
+                </>
+              ) : (
+                <>
+                  <span>Don't have an account?</span>
+                  <button type="button" onClick={() => { setIsSignUp(true); setError('') }} className="ml-2 text-primary underline">Sign up</button>
+                </>
+              )}
+            </div>
+
+            {/* Name Field for Sign Up */}
+            {isSignUp && (
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">Full Name</label>
+                <input
+                  id="name"
+                  type="text"
+                  placeholder="Juan Dela Cruz"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                />
+              </div>
+            )}
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
@@ -166,13 +226,13 @@ export default function LoginPage() {
               </a>
             </div>
 
-            {/* Login Button */}
+            {/* Login / Sign Up Button */}
             <button
               type="submit"
               disabled={loading}
               className={`w-full bg-primary text-white py-2.5 rounded-lg font-semibold hover:bg-gold-accent hover:text-dark-navy hover:shadow-lg hover:scale-105 transition-all duration-300 transform active:scale-95 mt-6 ${loading ? 'opacity-70 cursor-wait' : ''}`}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? (isSignUp ? 'Signing up...' : 'Signing in...') : (isSignUp ? 'Sign Up' : 'Sign In')}
             </button>
           </form>
 
