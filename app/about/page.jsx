@@ -10,7 +10,7 @@ export default function AboutPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold">About the System</h1>
-                <p className="text-sm md:text-base mt-1">NKLS Information Card</p>
+                <p className="text-sm md:text-base mt-1">NCIP I-Learn Information Card</p>
               </div>
             </div>
           </div>
@@ -18,16 +18,16 @@ export default function AboutPage() {
 
         <section className="max-w-4xl mx-auto px-4 py-8 md:py-12">
           <article className="mx-auto text-slate-800">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: '#0B3C5D' }}>NCIP Knowledge and Library System (NKLS)</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: '#0B3C5D' }}>NCIP Knowledge and Library System (I-Learn)</h2>
             <div className="h-1 w-16 mb-6" style={{ backgroundColor: '#CFAE70' }} />
 
-            <h3 className="text-lg font-semibold mt-4">What is NKLS?</h3>
+            <h3 className="text-lg font-semibold mt-4">What is I-Learn?</h3>
             <p className="mt-2 leading-relaxed text-sm md:text-base">
-              NKLS is a comprehensive digital repository dedicated to safeguarding and promoting Indigenous knowledge systems, cultural heritage, and community resources with respect and dignity. Our mission is to ensure Indigenous knowledge remains under community control while being accessible to those who legitimately benefit from it.
+              I-Learn is a comprehensive digital repository dedicated to safeguarding and promoting Indigenous knowledge systems, cultural heritage, and community resources with respect and dignity. Our mission is to ensure Indigenous knowledge remains under community control while being accessible to those who legitimately benefit from it.
             </p>
 
             <h3 className="text-lg font-semibold mt-6">Who Can Use It?</h3>
-            <p className="mt-2 leading-relaxed text-sm md:text-base">NKLS serves a broad range of users with different access levels:</p>
+            <p className="mt-2 leading-relaxed text-sm md:text-base">I-Learn serves a broad range of users with different access levels:</p>
             <ul className="list-disc pl-6 mt-2 text-sm md:text-base space-y-1">
               <li>Guests: Browse publicly available materials without logging in.</li>
               <li>Members: Borrow materials, save favorites, and track loans.</li>

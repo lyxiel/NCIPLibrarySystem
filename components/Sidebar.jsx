@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 import {
   LayoutDashboard,
   BookOpen,
@@ -76,11 +78,18 @@ const Sidebar = ({ isOpen, onClose }) => {
     return userMenuItems
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+    } catch (e) {
+      console.warn('Error signing out:', e)
+    }
     localStorage.removeItem('isLoggedIn')
     localStorage.removeItem('userRole')
+    localStorage.removeItem('token')
+    localStorage.removeItem('uid')
     localStorage.removeItem('rememberEmail')
-    router.push('/login')
+    router.push('/')
   }
 
   const menuItems = getMenuItems()

@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 import AppLayout from '@/components/AppLayout'
 import { mockUsers } from '@/lib/mockData'
 import { Settings, Bell, Lock, Shield, LogOut, Save, X } from 'lucide-react'
@@ -47,11 +49,18 @@ export default function AccountPage() {
     setHasChanges(false)
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
+      try {
+        await signOut(auth)
+      } catch (e) {
+        console.warn('Error signing out:', e)
+      }
       localStorage.removeItem('isLoggedIn')
       localStorage.removeItem('userRole')
-      router.push('/login')
+      localStorage.removeItem('token')
+      localStorage.removeItem('uid')
+      router.push('/')
     }
   }
 

@@ -4,6 +4,8 @@ import { Bell, User, Menu, LogOut, Settings, UserCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { mockUsers } from '@/lib/mockData'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 
 const Navbar = ({ onMenuClick }) => {
   const router = useRouter()
@@ -22,11 +24,19 @@ const Navbar = ({ onMenuClick }) => {
     }
   }, [])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+    } catch (e) {
+      console.warn('Error signing out:', e)
+    }
     localStorage.removeItem('isLoggedIn')
     localStorage.removeItem('userRole')
+    localStorage.removeItem('token')
+    localStorage.removeItem('uid')
+    localStorage.removeItem('rememberEmail')
     setIsDropdownOpen(false)
-    router.push('/login')
+    router.push('/')
   }
 
   return (
