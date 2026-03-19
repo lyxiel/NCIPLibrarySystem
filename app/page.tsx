@@ -3,25 +3,12 @@
 import { useEffect, useState } from 'react'
 import Flashcards from '@/components/Flashcards'
 import Footer from '@/components/Footer'
-import InfoModal from '@/components/InfoModal'
 
 export default function Page() {
   const [isClient, setIsClient] = useState(false)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalType, setModalType] = useState('about')
 
   useEffect(() => {
     setIsClient(true)
-  }, [])
-
-  useEffect(() => {
-    function onOpenInfoCard(e) {
-      const type = e?.detail?.type || 'about'
-      setModalType(type)
-      setModalOpen(true)
-    }
-    window.addEventListener('openInfoCard', onOpenInfoCard)
-    return () => window.removeEventListener('openInfoCard', onOpenInfoCard)
   }, [])
 
   // Background image with light overlay (70-85% white/gray) for black text readability
@@ -46,7 +33,6 @@ export default function Page() {
         </div>
       </main>
       <Footer />
-      <InfoModal open={modalOpen} type={modalType} onClose={() => setModalOpen(false)} />
     </div>
   )
 }

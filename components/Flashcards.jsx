@@ -11,9 +11,6 @@ const cards = [
 ]
 
 export default function Flashcards({ className = '' }) {
-  const openCard = (key) => {
-    window.dispatchEvent(new CustomEvent('openInfoCard', { detail: { type: key } }))
-  }
 
   return (
     <section className={`min-h-screen w-full ${className}`}>
@@ -40,27 +37,26 @@ export default function Flashcards({ className = '' }) {
         </div>
 
         {/* About Flash Cards Grid */}
-        <div className="mt-20">
+          <div className="mt-20">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-black mb-12">About NKLS</h2>
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {cards.map((c) => (
-              <button
-                key={c.key}
-                onClick={() => openCard(c.key)}
-                className="text-left p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 active:scale-95 cursor-pointer overflow-hidden group"
-                style={{ backgroundColor: '#FFF' }}
-              >
-                {/* Gold top border accent */}
-                <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: '#CFAE70' }} />
-                
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="p-3 rounded-lg transition-all duration-300 group-hover:shadow-md" style={{ backgroundColor: '#0B3C5D', color: '#CFAE70' }}>
-                    <c.icon className="w-6 h-6" />
+                <Link
+                  href={`/about#${c.key}`}
+                  key={c.key}
+                  className="relative block text-left p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 active:scale-95 cursor-pointer overflow-hidden group bg-white"
+                >
+                  {/* Gold top border accent */}
+                  <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: '#CFAE70' }} />
+
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 rounded-lg transition-all duration-300 group-hover:shadow-md" style={{ backgroundColor: '#0B3C5D', color: '#CFAE70' }}>
+                      <c.icon className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-lg font-semibold" style={{ color: '#0B3C5D' }}>{c.title}</h3>
                   </div>
-                  <h3 className="text-lg font-semibold" style={{ color: '#0B3C5D' }}>{c.title}</h3>
-                </div>
-                <p className="text-black/80 leading-relaxed text-sm">{c.body}</p>
-              </button>
+                  <p className="text-black/80 leading-relaxed text-sm">{c.body}</p>
+                </Link>
             ))}
           </div>
         </div>

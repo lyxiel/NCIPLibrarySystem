@@ -9,9 +9,31 @@ export default function AboutPage() {
           <div className="max-w-5xl mx-auto px-6 py-6 md:py-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold">About the System</h1>
+                <h1 id="about" className="text-2xl md:text-3xl font-bold">About the System</h1>
                 <p className="text-sm md:text-base mt-1">NCIP I-Learn Information Card</p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Quick cards for Mandate / Vision / Mission / Core Values with anchors */}
+        <section className="max-w-5xl mx-auto px-6 py-8">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <div id="mandate" className="p-6 rounded-lg border shadow-sm bg-white">
+              <h3 className="text-center font-semibold text-lg" style={{ color: '#0B3C5D' }}>Mandate</h3>
+              <p className="mt-3 text-sm text-slate-700">The NCIP shall protect and promote the interest and well-being of the Indigenous Cultural Communities/Indigenous Peoples with due regard to their beliefs, customs, traditions, and institutions.</p>
+            </div>
+            <div id="vision" className="p-6 rounded-lg border shadow-sm bg-white">
+              <h3 className="text-center font-semibold text-lg" style={{ color: '#0B3C5D' }}>Vision</h3>
+              <p className="mt-3 text-sm text-slate-700">A resilient and culturally grounded library network where Indigenous knowledge and cultural heritage are preserved and sustained for future generations.</p>
+            </div>
+            <div id="mission" className="p-6 rounded-lg border shadow-sm bg-white">
+              <h3 className="text-center font-semibold text-lg" style={{ color: '#0B3C5D' }}>Mission</h3>
+              <p className="mt-3 text-sm text-slate-700">Support access, preservation, and community-led stewardship of Indigenous knowledge and resources.</p>
+            </div>
+            <div id="corevalues" className="p-6 rounded-lg border shadow-sm bg-white">
+              <h3 className="text-center font-semibold text-lg" style={{ color: '#0B3C5D' }}>Core Values</h3>
+              <p className="mt-3 text-sm text-slate-700">Altruism, Trust, Nurturing, Culture-Sensitive, Integrity, Professionalism.</p>
             </div>
           </div>
         </section>

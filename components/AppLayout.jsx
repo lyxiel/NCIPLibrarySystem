@@ -1,17 +1,14 @@
-'use client'
+ 'use client'
 
 import { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 import Footer from './Footer'
-import InfoModal from './InfoModal'
 import { Toaster } from './ui/toaster'
 
 const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [theme, setTheme] = useState('light')
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalType, setModalType] = useState('mandate')
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen)
@@ -31,15 +28,7 @@ const AppLayout = ({ children }) => {
     }
   }, [])
 
-  useEffect(() => {
-    function onOpenInfoCard(e) {
-      const type = e?.detail?.type || 'mandate'
-      setModalType(type)
-      setModalOpen(true)
-    }
-    window.addEventListener('openInfoCard', onOpenInfoCard)
-    return () => window.removeEventListener('openInfoCard', onOpenInfoCard)
-  }, [])
+  // No longer open info cards as modals - navigate to /about instead
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -64,7 +53,6 @@ const AppLayout = ({ children }) => {
       </div>
       <Footer />
       <Toaster />
-      <InfoModal open={modalOpen} type={modalType} onClose={() => setModalOpen(false)} />
     </div>
   )
 }
