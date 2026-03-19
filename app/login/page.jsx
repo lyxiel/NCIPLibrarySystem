@@ -18,6 +18,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [remember, setRemember] = useState(false)
+  const [role, setRole] = useState('user')
+  const [affiliation, setAffiliation] = useState('')
   const [nextPath, setNextPath] = useState('')
 
   useEffect(() => {
@@ -40,6 +42,11 @@ export default function LoginPage() {
       return
     }
 
+    if (isSignUp && role === 'researcher' && !affiliation) {
+      setError('Please provide your affiliation or credentials for researcher role')
+      return
+    }
+
     setLoading(true)
     try {
       let userCredential
@@ -55,7 +62,8 @@ export default function LoginPage() {
           uid: user.uid,
           name,
           email,
-          role: 'user',
+          role: role || 'user',
+          affiliation: affiliation || '',
           createdAt: serverTimestamp(),
         })
       } else {
@@ -159,17 +167,46 @@ export default function LoginPage() {
 
             {/* Name Field for Sign Up */}
             {isSignUp && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">Full Name</label>
-                <input
-                  id="name"
-                  type="text"
-                  placeholder="Juan Dela Cruz"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
-                />
-              </div>
+              <>
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">Full Name</label>
+                  <input
+                    id="name"
+                    type="text"
+                    placeholder="Juan Dela Cruz"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="role" className="block text-sm font-medium text-foreground mb-2">Role</label>
+                  <select
+                    id="role"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                  >
+                    <option value="user">Community Member</option>
+                    <option value="researcher">Researcher</option>
+                  </select>
+                </div>
+
+                {role === 'researcher' && (
+                  <div>
+                    <label htmlFor="affiliation" className="block text-sm font-medium text-foreground mb-2">Affiliation / Institution</label>
+                    <input
+                      id="affiliation"
+                      type="text"
+                      placeholder="University / Organization"
+                      value={affiliation}
+                      onChange={(e) => setAffiliation(e.target.value)}
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                    />
+                  </div>
+                )}
+              </>
             )}
             {/* Email Field */}
             <div>

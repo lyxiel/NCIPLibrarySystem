@@ -29,6 +29,14 @@ export default function Flashcards({ className = '' }) {
           <p className="mt-4 text-lg md:text-xl text-black/80 max-w-2xl mx-auto leading-relaxed">
             A comprehensive digital repository dedicated to safeguarding and promoting Indigenous knowledge systems, cultural heritage, and community resources with respect and dignity.
           </p>
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <Link href="/books">
+              <button className="px-6 py-3 bg-primary text-white rounded-lg text-lg font-semibold hover:bg-gold-accent transition">Browse Materials</button>
+            </Link>
+            <Link href="/about">
+              <button className="px-6 py-3 bg-background text-foreground rounded-lg border border-border hover:bg-accent transition">Learn more</button>
+            </Link>
+          </div>
         </div>
 
         {/* About Flash Cards Grid */}
