@@ -97,6 +97,20 @@ export default function BooksPage() {
     return matchesSearch && matchesStatus
   })
 
+  const getClassification = (resourceType) => {
+    if (!resourceType) return 'Unclassified'
+    const rt = String(resourceType).toLowerCase()
+    if (rt.includes('book') || rt.includes('monograph')) return 'Monograph'
+    if (rt.includes('journal') || rt.includes('article')) return 'Article'
+    if (rt.includes('thesis') || rt.includes('dissertation')) return 'Thesis'
+    if (rt.includes('audio') || rt.includes('recording')) return 'Audio'
+    if (rt.includes('video') || rt.includes('film')) return 'Video'
+    if (rt.includes('report')) return 'Report'
+    if (rt.includes('iksp') || rt.includes('cl') || rt.includes('archive')) return 'IKSP/CL'
+    // fallback to original resourceType with capitalization
+    return resourceType.charAt(0).toUpperCase() + resourceType.slice(1)
+  }
+
   const handleAddBook = async (formData) => {
     // If editing an existing local-only book
     if (editingBook) {
@@ -295,6 +309,7 @@ export default function BooksPage() {
   const columns = [
     { key: 'code', label: 'CODE', width: '12%' },
     { key: 'resourceType', label: 'Resource Type', width: '10%' },
+    { key: 'classification', label: 'Classification', width: '10%' },
     { key: 'title', label: 'Title', width: '18%' },
     { key: 'author', label: 'Author', width: '12%' },
     { key: 'publisher', label: 'Publisher', width: '12%' },
@@ -314,6 +329,7 @@ export default function BooksPage() {
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.author}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.publisher}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.subject}</td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">{getClassification(book.resourceType)}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.datePublished}</td>
       <td className="px-6 py-4 text-sm text-foreground font-medium text-center">{book.copies}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.availability || 'Both'}</td>
@@ -497,7 +513,10 @@ export default function BooksPage() {
                   </h3>
                   <p className="text-sm text-muted-foreground mb-3">{book.author}</p>
 
-                  <div className="flex gap-2 mb-4 flex-wrap">
+                  <div className="flex gap-2 mb-4 flex-wrap items-center">
+                    <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-800 border border-gray-200">
+                      {getClassification(book.resourceType)}
+                    </span>
                     <StatusBadge status={book.status} />
                     <span className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200">
                       {book.copies} copies
