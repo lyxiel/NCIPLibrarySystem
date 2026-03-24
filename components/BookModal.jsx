@@ -38,7 +38,10 @@ const BookModal = ({ isOpen, onClose, onSubmit, initialData }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit(formData)
+    // Do not submit any A-Z classification persisted previously — classification is derived from resourceType
+    const payload = { ...formData }
+    if ('classification' in payload) delete payload.classification
+    onSubmit(payload)
     setFormData({
       ...defaultForm,
     })
@@ -102,6 +105,8 @@ const BookModal = ({ isOpen, onClose, onSubmit, initialData }) => {
               <option>Module</option>
             </select>
           </div>
+
+          {/* Classification is derived from Resource Type; no manual A-Z input */}
 
           {/* Title */}
           <div className="md:col-span-2">

@@ -35,7 +35,7 @@ export default function BooksPage() {
     setUserRole(role)
     setIsLoggedIn(loggedIn)
   }, [])
-
+ 
   // If redirected from login with next params to perform borrow, handle it
   useEffect(() => {
     try {
@@ -72,6 +72,7 @@ export default function BooksPage() {
             status: data.status || (data.availability === 'Hardcopy' ? 'Available' : 'Available'),
             dateAdded: data.dateAdded || '',
             availability: data.availability || 'Both',
+            classification: data.classification || '',
             keywords: data.keywords || '',
           }
         })
@@ -98,8 +99,8 @@ export default function BooksPage() {
   })
 
   const getClassification = (resourceType) => {
-    if (!resourceType) return 'Unclassified'
-    const rt = String(resourceType).toLowerCase()
+    const rt = String(resourceType || '').toLowerCase()
+    if (!rt) return 'Unclassified'
     if (rt.includes('book') || rt.includes('monograph')) return 'Monograph'
     if (rt.includes('journal') || rt.includes('article')) return 'Article'
     if (rt.includes('thesis') || rt.includes('dissertation')) return 'Thesis'
@@ -107,7 +108,6 @@ export default function BooksPage() {
     if (rt.includes('video') || rt.includes('film')) return 'Video'
     if (rt.includes('report')) return 'Report'
     if (rt.includes('iksp') || rt.includes('cl') || rt.includes('archive')) return 'IKSP/CL'
-    // fallback to original resourceType with capitalization
     return resourceType.charAt(0).toUpperCase() + resourceType.slice(1)
   }
 
@@ -320,16 +320,15 @@ export default function BooksPage() {
     { key: 'status', label: 'Status', width: '10%' },
     { key: 'actions', label: 'Actions', width: '8%' },
   ]
-
   const renderRow = (book) => (
     <tr key={book.id} className="border-b border-border hover:bg-[hsl(205,30%,88%)] dark:hover:bg-[hsl(205,54%,20%)] transition-all duration-300 ease-in-out">
       <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{book.code}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.resourceType}</td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">{getClassification(book.resourceType)}</td>
       <td className="px-6 py-4 text-sm text-foreground font-medium cursor-pointer" onClick={() => setSelectedBook(book)}>{book.title}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.author}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.publisher}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.subject}</td>
-      <td className="px-6 py-4 text-sm text-muted-foreground">{getClassification(book.resourceType)}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.datePublished}</td>
       <td className="px-6 py-4 text-sm text-foreground font-medium text-center">{book.copies}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.availability || 'Both'}</td>
@@ -434,6 +433,8 @@ export default function BooksPage() {
             </p>
           </div>
         )}
+
+        {/* Classification is derived from resource type (shown in table/grid) */}
 
         {/* Search and Filter Bar */}
         <div className="card-soft">
