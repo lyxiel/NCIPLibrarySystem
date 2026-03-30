@@ -35,14 +35,25 @@ export default function BooksPage() {
     setUserRole(role)
     setIsLoggedIn(loggedIn)
   }, [])
- 
-  // If redirected from login with next params to perform borrow, handle it
+
+  const [selectedCategory, setSelectedCategory] = useState('')
+
+  const classificationCategories = [
+    'Monograph',
+    'Article',
+    'Thesis',
+    'Audio',
+    'Video',
+    'Report',
+    'IKSP/CL',
+    'Unclassified',
+  ];
   useEffect(() => {
     try {
       const action = searchParams?.get('action')
       const bookIdParam = searchParams?.get('bookId')
       if (action === 'borrow' && bookIdParam && isLoggedIn) {
-        const id = isNaN(Number(bookIdParam)) ? bookIdParam : (Number(bookIdParam))
+        const id = isNaN(Number(bookIdParam)) ? bookIdParam : Number(bookIdParam)
         performBorrow(id)
         // remove query by replacing to /books
         router.replace('/books')
@@ -86,6 +97,19 @@ export default function BooksPage() {
     fetchBooks()
   }, [])
 
+  const getClassification = (resourceType) => {
+    if (!resourceType) return 'Unclassified';
+    const t = String(resourceType).toLowerCase();
+    if (t.includes('book') || t.includes('monograph')) return 'Monograph';
+    if (t.includes('article') || t.includes('journal')) return 'Article';
+    if (t.includes('thesis') || t.includes('dissertation')) return 'Thesis';
+    if (t.includes('audio') || t.includes('sound') || t.includes('recording')) return 'Audio';
+    if (t.includes('video') || t.includes('film') || t.includes('dvd')) return 'Video';
+    if (t.includes('report')) return 'Report';
+    if (t.includes('iksp') || t.includes('cl')) return 'IKSP/CL';
+    return 'Unclassified';
+  }
+
   const filteredBooks = books.filter((book) => {
     const matchesSearch =
       book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -94,22 +118,11 @@ export default function BooksPage() {
       book.publisher.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus = !filterStatus || book.status === filterStatus
+    const matchesCategory = !selectedCategory || getClassification(book.resourceType) === selectedCategory
 
-    return matchesSearch && matchesStatus
+    return matchesSearch && matchesStatus && matchesCategory
   })
-
-  const getClassification = (resourceType) => {
-    const rt = String(resourceType || '').toLowerCase()
-    if (!rt) return 'Unclassified'
-    if (rt.includes('book') || rt.includes('monograph')) return 'Monograph'
-    if (rt.includes('journal') || rt.includes('article')) return 'Article'
-    if (rt.includes('thesis') || rt.includes('dissertation')) return 'Thesis'
-    if (rt.includes('audio') || rt.includes('recording')) return 'Audio'
-    if (rt.includes('video') || rt.includes('film')) return 'Video'
-    if (rt.includes('report')) return 'Report'
-    if (rt.includes('iksp') || rt.includes('cl') || rt.includes('archive')) return 'IKSP/CL'
-    return resourceType.charAt(0).toUpperCase() + resourceType.slice(1)
-  }
+  
 
   const handleAddBook = async (formData) => {
     // If editing an existing local-only book
@@ -309,7 +322,6 @@ export default function BooksPage() {
   const columns = [
     { key: 'code', label: 'CODE', width: '12%' },
     { key: 'resourceType', label: 'Resource Type', width: '10%' },
-    { key: 'classification', label: 'Classification', width: '10%' },
     { key: 'title', label: 'Title', width: '18%' },
     { key: 'author', label: 'Author', width: '12%' },
     { key: 'publisher', label: 'Publisher', width: '12%' },
@@ -324,7 +336,6 @@ export default function BooksPage() {
     <tr key={book.id} className="border-b border-border hover:bg-[hsl(205,30%,88%)] dark:hover:bg-[hsl(205,54%,20%)] transition-all duration-300 ease-in-out">
       <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{book.code}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.resourceType}</td>
-      <td className="px-6 py-4 text-sm text-muted-foreground">{getClassification(book.resourceType)}</td>
       <td className="px-6 py-4 text-sm text-foreground font-medium cursor-pointer" onClick={() => setSelectedBook(book)}>{book.title}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.author}</td>
       <td className="px-6 py-4 text-sm text-muted-foreground">{book.publisher}</td>
@@ -434,7 +445,24 @@ export default function BooksPage() {
           </div>
         )}
 
-        {/* Classification is derived from resource type (shown in table/grid) */}
+        {/* Browse by Category (derived from resourceType) */}
+        <div className="card-soft">
+          <h3 className="text-lg font-semibold mb-3">Browse by Category</h3>
+          <div className="flex flex-wrap gap-2">
+            {classificationCategories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(selectedCategory === cat ? '' : cat)}
+                className={`px-3 py-2 rounded-md text-sm ${selectedCategory === cat ? 'bg-primary text-white' : 'bg-background border border-border text-foreground'}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          {selectedCategory && (
+            <div className="mt-2 text-sm text-muted-foreground">Filtering by <strong>{selectedCategory}</strong></div>
+          )}
+        </div>
 
         {/* Search and Filter Bar */}
         <div className="card-soft">

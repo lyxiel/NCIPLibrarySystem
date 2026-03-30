@@ -102,7 +102,7 @@ export default function ReportsPage() {
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto p-4">
-        <h1 className="text-2xl md:text-3xl font-bold mb-4">Reports — NKLS (Admin)</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-4">Reports — I-LEARN (Admin)</h1>
 
         <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

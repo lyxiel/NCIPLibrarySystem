@@ -18,27 +18,20 @@ export default function Flashcards({ className = '' }) {
       <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center mb-16">
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-4 text-black">
-            NCIP Knowledge and Library System
+            NCIP I-LEARN SYSTEM
           </h1>
           <p className="text-2xl md:text-3xl font-semibold text-black/90 mb-6">
-            Preserving Indigenous Knowledge, Protecting Cultural Heritage
+            Indigenous Library, Education, Archive, and Resource Network
           </p>
           <p className="mt-4 text-lg md:text-xl text-black/80 max-w-2xl mx-auto leading-relaxed">
             A comprehensive digital repository dedicated to safeguarding and promoting Indigenous knowledge systems, cultural heritage, and community resources with respect and dignity.
           </p>
-          <div className="mt-6 flex items-center justify-center gap-4">
-            <Link href="/books">
-              <button className="px-6 py-3 bg-primary text-white rounded-lg text-lg font-semibold hover:bg-gold-accent transition">Browse Materials</button>
-            </Link>
-            <Link href="/about">
-              <button className="px-6 py-3 bg-background text-foreground rounded-lg border border-border hover:bg-accent transition">Learn more</button>
-            </Link>
-          </div>
+          {/* Action buttons moved to the top header for consistency and responsiveness */}
         </div>
 
         {/* About Flash Cards Grid */}
           <div className="mt-20">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-black mb-12">About NKLS</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-black mb-12">About I-LEARN</h2>
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {cards.map((c) => (
                 <Link

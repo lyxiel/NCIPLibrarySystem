@@ -20,10 +20,10 @@ export default function InfoModal({ open, type, onClose }) {
   const contentMap = {
     about: {
       title: 'About the System',
-      body: `NCIP Knowledge and Library System (NKLS)
+      body: `NCIP I-LEARN SYSTEM (I-LEARN)
 
-What is NKLS?
-NKLS is a comprehensive digital repository dedicated to safeguarding and promoting Indigenous knowledge systems, cultural heritage, and community resources with respect and dignity.
+What is I-LEARN?
+I-LEARN is a comprehensive digital repository dedicated to safeguarding and promoting Indigenous knowledge systems, cultural heritage, and community resources with respect and dignity.
 
 Who Can Use It?
 • Guests: Browse materials without login
@@ -156,7 +156,7 @@ Adhering to the highest standards of behavior and performance in the workplace i
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold">{data.title}</h3>
-                  <p className="text-white/80 text-sm">NKLS Information Card</p>
+                  <p className="text-white/80 text-sm">I-LEARN Information Card</p>
                 </div>
               </div>
 

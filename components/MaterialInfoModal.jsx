@@ -2,6 +2,19 @@
 
 import { X } from 'lucide-react'
 
+const getClassification = (resourceType) => {
+  if (!resourceType) return 'Unclassified'
+  const t = String(resourceType).toLowerCase()
+  if (t.includes('book') || t.includes('monograph')) return 'Monograph'
+  if (t.includes('article') || t.includes('journal')) return 'Article'
+  if (t.includes('thesis') || t.includes('dissertation')) return 'Thesis'
+  if (t.includes('audio') || t.includes('recording') || t.includes('sound')) return 'Audio'
+  if (t.includes('video') || t.includes('film') || t.includes('dvd')) return 'Video'
+  if (t.includes('report')) return 'Report'
+  if (t.includes('iksp') || t.includes('cl') || t.includes('archive')) return 'IKSP/CL'
+  return 'Unclassified'
+}
+
 export default function MaterialInfoModal({ isOpen, onClose, book, onBorrow, userRole }) {
   if (!isOpen || !book) return null
 
@@ -24,18 +37,7 @@ export default function MaterialInfoModal({ isOpen, onClose, book, onBorrow, use
           <div>
             <p className="text-sm text-muted-foreground mb-2"><strong>Code:</strong> {book.code}</p>
             <p className="text-sm text-muted-foreground mb-2"><strong>Resource Type:</strong> {book.resourceType}</p>
-            <p className="text-sm text-muted-foreground mb-2"><strong>Classification:</strong> {(() => {
-              const rt = String(book.resourceType || '').toLowerCase()
-              if (!rt) return 'Unclassified'
-              if (rt.includes('book') || rt.includes('monograph')) return 'Monograph'
-              if (rt.includes('journal') || rt.includes('article')) return 'Article'
-              if (rt.includes('thesis') || rt.includes('dissertation')) return 'Thesis'
-              if (rt.includes('audio') || rt.includes('recording')) return 'Audio'
-              if (rt.includes('video') || rt.includes('film')) return 'Video'
-              if (rt.includes('report')) return 'Report'
-              if (rt.includes('iksp') || rt.includes('cl') || rt.includes('archive')) return 'IKSP/CL'
-              return book.resourceType?.charAt(0).toUpperCase() + book.resourceType?.slice(1)
-            })()}</p>
+                <p className="text-sm text-muted-foreground mb-2"><strong>Classification:</strong> {getClassification(book.resourceType)}</p>
             <p className="text-sm text-muted-foreground mb-2"><strong>Publisher:</strong> {book.publisher}</p>
             <p className="text-sm text-muted-foreground mb-2"><strong>Subject:</strong> {book.subject}</p>
             <p className="text-sm text-muted-foreground mb-2"><strong>Date Published:</strong> {book.datePublished}</p>

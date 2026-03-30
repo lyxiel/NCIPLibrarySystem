@@ -11,9 +11,9 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           <div>
-            <h3 className="text-lg font-bold mb-2 text-gold-accent">NKLS</h3>
+            <h3 className="text-lg font-bold mb-2 text-gold-accent">NCIP I-LEARN SYSTEM</h3>
             <p className="text-sm text-slate-300">
-              NCIP Knowledge & Library System — preserving indigenous knowledge and cultural heritage.
+              Indigenous Library, Education, Archive, and Resource Network — preserving indigenous knowledge and cultural heritage.
             </p>
           </div>
 
@@ -39,7 +39,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-slate-700 mt-6 pt-4">
-          <p className="text-xs text-slate-400 text-center">© {currentYear} NCIP Knowledge & Library System. All rights reserved.</p>
+          <p className="text-xs text-slate-400 text-center">© {currentYear} NCIP I-LEARN SYSTEM. All rights reserved.</p>
         </div>
       </div>
     </footer>

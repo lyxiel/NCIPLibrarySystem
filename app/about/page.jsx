@@ -40,7 +40,8 @@ export default function AboutPage() {
 
         <section className="max-w-4xl mx-auto px-4 py-8 md:py-12">
           <article className="mx-auto text-slate-800">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: '#0B3C5D' }}>NCIP Knowledge and Library System (I-Learn)</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2" style={{ color: '#0B3C5D' }}>NCIP I-LEARN SYSTEM</h2>
+            <p className="text-sm md:text-base mt-2" style={{ color: '#0B3C5D' }}>Indigenous Library, Education, Archive, and Resource Network</p>
             <div className="h-1 w-16 mb-6" style={{ backgroundColor: '#CFAE70' }} />
 
             <h3 className="text-lg font-semibold mt-4">What is I-Learn?</h3>

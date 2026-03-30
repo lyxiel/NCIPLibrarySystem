@@ -33,29 +33,37 @@ export default function Header() {
             {/* Logo on the left (smaller) */}
             <Logo />
 
-            {/* Top Navigation - About, Browse Materials, Login */}
-            <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-end gap-4 items-center">
-              <Link
-                href="/about"
-                className="px-5 py-2 rounded-md font-semibold text-black hover:text-[#0B3C5D] transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
-              >
+            {/* Desktop nav */}
+            <nav className="hidden md:flex items-center gap-4">
+              <Link href="/about" className="px-4 py-2 rounded-md font-semibold text-[#0B3C5D] hover:text-white hover:bg-[#0B3C5D] transition-all duration-200">
                 About
               </Link>
-              <Link
-                href="/books"
-                className="px-5 py-2 rounded-md font-semibold border-2 border-[#0B3C5D] text-black hover:bg-[#0B3C5D] hover:text-white transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
-              >
+              <Link href="/books" className="px-4 py-2 rounded-md font-semibold border-2 border-[#0B3C5D] text-[#0B3C5D] hover:bg-[#0B3C5D] hover:text-white transition-all duration-200">
                 Browse Materials
               </Link>
-              <Link
-                href="/login"
-                className="px-5 py-2 rounded-md font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-95 cursor-pointer"
-                style={{ backgroundColor: '#0B3C5D' }}
-              >
+              <Link href="/login" className="px-4 py-2 rounded-md font-semibold bg-[#0B3C5D] text-white hover:bg-[#083244] transition-all duration-200">
                 Login / Sign In
               </Link>
             </nav>
+
+            {/* Mobile menu toggle */}
+            <div className="md:hidden flex items-center">
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-md text-[#0B3C5D] hover:bg-gray-100">
+                {mobileMenuOpen ? <X /> : <Menu />}
+              </button>
+            </div>
           </div>
+
+          {/* Mobile menu panel */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-2 pb-4">
+              <div className="flex flex-col gap-2">
+                <Link href="/about" className="block px-4 py-2 rounded-md font-semibold text-[#0B3C5D] hover:bg-gray-50">About</Link>
+                <Link href="/books" className="block px-4 py-2 rounded-md font-semibold text-[#0B3C5D] hover:bg-gray-50">Browse Materials</Link>
+                <Link href="/login" className="block px-4 py-2 rounded-md font-semibold bg-[#0B3C5D] text-white">Login / Sign In</Link>
+              </div>
+            </div>
+          )}
         </div>
       </header>
     )
