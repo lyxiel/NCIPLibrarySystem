@@ -35,6 +35,9 @@ export default function MaterialInfoModal({ isOpen, onClose, book, onBorrow, use
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
+            {book.coverUrl && (
+              <img src={book.coverUrl} alt={`${book.title} cover`} className="w-full max-h-72 object-contain rounded mb-4" />
+            )}
             <p className="text-sm text-muted-foreground mb-2"><strong>Code:</strong> {book.code}</p>
             <p className="text-sm text-muted-foreground mb-2"><strong>Resource Type:</strong> {book.resourceType}</p>
                 <p className="text-sm text-muted-foreground mb-2"><strong>Classification:</strong> {getClassification(book.resourceType)}</p>

@@ -10,6 +10,8 @@ import BookModal from '@/components/BookModal'
 import MaterialInfoModal from '@/components/MaterialInfoModal'
 import { db } from '@/lib/firebase'
 import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { storage } from '@/lib/firebase'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { Plus, Search, Edit, Trash2, Grid3x3, List, BookOpen, FileUp, Check } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 
@@ -131,10 +133,30 @@ export default function BooksPage() {
       try {
         if (editingBook.id) {
           const bookRef = doc(db, 'books', String(editingBook.id))
-          await updateDoc(bookRef, {
-            ...formData,
-            copies: Number(formData.copies) || 0,
-          })
+
+          // If a new cover file was provided while editing, upload it and set coverUrl
+          let coverUrl = formData.coverUrl || ''
+          if (formData.coverFile) {
+            try {
+              const filenameBase = (formData.code || 'cover').replace(/[^a-z0-9-_]/gi, '_')
+              const ts = Date.now()
+              const file = formData.coverFile
+              const ext = (file.name || '').split('.').pop() || 'png'
+              const storagePath = `covers/${filenameBase}-${ts}.${ext}`
+              const sRef = storageRef(storage, storagePath)
+              await uploadBytes(sRef, file)
+              coverUrl = await getDownloadURL(sRef)
+            } catch (e) {
+              console.warn('Failed to upload cover image during edit:', e)
+            }
+          }
+
+          const dataToUpdate = { ...formData }
+          if (dataToUpdate.coverFile) delete dataToUpdate.coverFile
+          dataToUpdate.coverUrl = coverUrl
+          dataToUpdate.copies = Number(dataToUpdate.copies) || 0
+
+          await updateDoc(bookRef, dataToUpdate)
         }
 
         // Update local state
@@ -197,15 +219,37 @@ export default function BooksPage() {
 
     // Create a new document in Firestore 'books' collection
     try {
-      const docRef = await addDoc(collection(db, 'books'), {
-        ...formData,
-        copies: Number(formData.copies) || 0,
-        dateAdded: new Date().toISOString().split('T')[0],
-        createdAt: serverTimestamp(),
-      })
+      // If a cover file was provided, upload it first and get URL
+      let coverUrl = formData.coverUrl || ''
+      if (formData.coverFile) {
+        try {
+          // Use generated code as part of filename if available
+          const filenameBase = (formData.code || 'cover').replace(/[^a-z0-9-_]/gi, '_')
+          const ts = Date.now()
+          const file = formData.coverFile
+          const ext = (file.name || '').split('.').pop() || 'png'
+          const storagePath = `covers/${filenameBase}-${ts}.${ext}`
+          const sRef = storageRef(storage, storagePath)
+          await uploadBytes(sRef, file)
+          coverUrl = await getDownloadURL(sRef)
+        } catch (e) {
+          console.warn('Failed to upload cover image:', e)
+        }
+      }
+
+      const dataToSave = { ...formData }
+      // remove File objects before saving to Firestore
+      if (dataToSave.coverFile) delete dataToSave.coverFile
+      dataToSave.coverUrl = coverUrl
+      dataToSave.copies = Number(dataToSave.copies) || 0
+      dataToSave.dateAdded = new Date().toISOString().split('T')[0]
+      dataToSave.createdAt = serverTimestamp()
+
+      const docRef = await addDoc(collection(db, 'books'), dataToSave)
 
       const newBook = {
         ...formData,
+        coverUrl,
         id: docRef.id,
         copies: Number(formData.copies) || 0,
         dateAdded: new Date().toISOString().split('T')[0],

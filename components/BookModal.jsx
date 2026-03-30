@@ -15,14 +15,18 @@ const BookModal = ({ isOpen, onClose, onSubmit, initialData, suggestCode }) => {
     copies: 1,
     availability: 'Both',
     keywords: '',
+    coverUrl: '',
+    coverFile: null,
   }
 
   const [formData, setFormData] = useState(initialData || defaultForm)
+  const [coverPreview, setCoverPreview] = useState(initialData?.coverUrl || '')
 
   // Update form when editing an existing book (initialData changes)
   useEffect(() => {
     if (initialData) {
       setFormData({ ...defaultForm, ...initialData })
+      setCoverPreview(initialData.coverUrl || '')
     } else {
       setFormData(defaultForm)
     }
@@ -48,15 +52,35 @@ const BookModal = ({ isOpen, onClose, onSubmit, initialData, suggestCode }) => {
     }
   }
 
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0] || null
+    setFormData((prev) => ({ ...prev, coverFile: file }))
+    if (file) {
+      const url = URL.createObjectURL(file)
+      setCoverPreview(url)
+    } else {
+      setCoverPreview('')
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     // Do not submit any A-Z classification persisted previously — classification is derived from resourceType
     const payload = { ...formData }
     if ('classification' in payload) delete payload.classification
     onSubmit(payload)
+
+    // Revoke object URL to avoid memory leaks
+    try {
+      if (coverPreview && coverPreview.startsWith('blob:')) URL.revokeObjectURL(coverPreview)
+    } catch (e) {
+      // ignore
+    }
+
     setFormData({
       ...defaultForm,
     })
+    setCoverPreview('')
   }
 
   if (!isOpen) return null
@@ -211,6 +235,15 @@ const BookModal = ({ isOpen, onClose, onSubmit, initialData, suggestCode }) => {
               <option>Softcopy</option>
               <option>Both</option>
             </select>
+          </div>
+
+          {/* Cover Image */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-foreground mb-1">Cover Image</label>
+            <input type="file" accept="image/*" name="cover" onChange={handleFileChange} className="w-full" />
+            {coverPreview && (
+              <img src={coverPreview} alt="Cover preview" className="mt-2 max-h-48 object-contain rounded" />
+            )}
           </div>
 
           {/* Keywords */}
