@@ -135,12 +135,12 @@ export default function LoginPage() {
         {/* Login Form Card */}
         <div className="bg-white rounded-xl shadow-xl p-8">
           <div className="flex justify-center mb-6">
-            <img src="/Logo/R.png" alt="NCIP Logo" className="h-16 w-16 object-contain" />
+            <img src="/Logo/ncip-office-logo.png" alt="NCIP Office on Policy, Planning & Research" className="h-16 w-16 object-contain" />
           </div>
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-foreground mb-2">NCIP</h1>
             <p className="text-foreground text-sm">Library Management System</p>
-            <p className="text-muted-foreground text-xs mt-1">Office On Policy, Planning and Research</p>
+            <p className="text-muted-foreground text-xs mt-1">NCIP Office on Policy, Planning & Research</p>
           </div>
 
           {error && (

@@ -100,10 +100,9 @@ const Sidebar = ({ isOpen, onClose }) => {
       <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-sidebar text-sidebar-foreground flex-col border-r border-sidebar-border z-40">
         {/* Logo Section */}
         <div className="p-6 border-b border-sidebar-border flex items-center gap-3">
-          <img src="/Logo/R.png" alt="NCIP Logo" className="w-16 h-16 object-contain rounded-md" />
+          <img src="/Logo/ncip-office-logo.png" alt="NCIP Office on Policy, Planning & Research" className="w-16 h-16 object-contain rounded-md" />
           <div>
-            <h1 className="text-lg font-bold">NCIP</h1>
-            <p className="text-xs text-sidebar-foreground/70">Office of Policy, Planning & Research</p>
+            <h1 className="text-sm font-semibold">NCIP Office on Policy, Planning & Research</h1>
           </div>
         </div>
 
@@ -150,8 +149,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Logo Section */}
         <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">NCIP</h1>
-            <p className="text-sm text-sidebar-foreground/70">Library System</p>
+            <h1 className="text-lg font-semibold">NCIP Office on Policy, Planning & Research</h1>
           </div>
           <button onClick={onClose} className="lg:hidden">
             <X size={24} />

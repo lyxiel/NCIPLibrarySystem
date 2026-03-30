@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 
-const BookModal = ({ isOpen, onClose, onSubmit, initialData }) => {
+const BookModal = ({ isOpen, onClose, onSubmit, initialData, suggestCode }) => {
   const defaultForm = {
     code: '',
     resourceType: '',
@@ -34,6 +34,18 @@ const BookModal = ({ isOpen, onClose, onSubmit, initialData }) => {
       ...prev,
       [name]: name === 'copies' ? parseInt(value) : value,
     }))
+
+    // When resourceType changes for a new book, optionally request a suggested code
+    if (name === 'resourceType' && !initialData && typeof suggestCode === 'function') {
+      try {
+        const suggested = suggestCode(value)
+        if (suggested) {
+          setFormData((prev) => ({ ...prev, code: suggested }))
+        }
+      } catch (e) {
+        // ignore suggestion errors
+      }
+    }
   }
 
   const handleSubmit = (e) => {

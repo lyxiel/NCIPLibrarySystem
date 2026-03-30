@@ -161,6 +161,40 @@ export default function BooksPage() {
       }
     }
 
+    // Auto-generate resource code based on resourceType when not provided
+    const getPrefix = (resourceType) => {
+      if (!resourceType) return 'LMX'
+      const t = String(resourceType).toLowerCase()
+      if (t.includes('article')) return 'LMA'
+      if (t.includes('book') || t.includes('monograph') || t.includes('monograph')) return 'LMB'
+      if (t.includes('report')) return 'LMR'
+      if (t.includes('thesis') || t.includes('dissertation')) return 'LMT'
+      if (t.includes('magazine')) return 'LMM'
+      if (t.includes('case')) return 'LMCS'
+      if (t.includes('research') && t.includes('paper')) return 'LMRP'
+      if (t.includes('newspaper')) return 'LMN'
+      return 'LMX'
+    }
+
+    // If no code supplied, compute next incremental number for the classification
+    try {
+      if (!formData.code) {
+        const prefix = getPrefix(formData.resourceType)
+        const nums = books
+          .map((b) => b.code || '')
+          .filter((c) => c.toUpperCase().startsWith(prefix + '-'))
+          .map((c) => {
+            const m = c.match(/-(\d+)$/)
+            return m ? Number(m[1]) : 0
+          })
+        const nextNum = nums.length ? Math.max(...nums) + 1 : 1
+        formData.code = `${prefix}-${nextNum}`
+      }
+    } catch (e) {
+      console.warn('Error generating code prefix:', e)
+      if (!formData.code) formData.code = 'LMX-1'
+    }
+
     // Create a new document in Firestore 'books' collection
     try {
       const docRef = await addDoc(collection(db, 'books'), {
@@ -601,6 +635,36 @@ export default function BooksPage() {
               setEditingBook(null)
             }}
             onSubmit={handleAddBook}
+            suggestCode={(resourceType) => {
+              const getPrefix = (resourceType) => {
+                if (!resourceType) return 'LMX'
+                const t = String(resourceType).toLowerCase()
+                if (t.includes('article')) return 'LMA'
+                if (t.includes('book') || t.includes('monograph') || t.includes('monograph')) return 'LMB'
+                if (t.includes('report')) return 'LMR'
+                if (t.includes('thesis') || t.includes('dissertation')) return 'LMT'
+                if (t.includes('magazine')) return 'LMM'
+                if (t.includes('case')) return 'LMCS'
+                if (t.includes('research') && t.includes('paper')) return 'LMRP'
+                if (t.includes('newspaper')) return 'LMN'
+                return 'LMX'
+              }
+
+              try {
+                const prefix = getPrefix(resourceType)
+                const nums = books
+                  .map((b) => b.code || '')
+                  .filter((c) => c.toUpperCase().startsWith(prefix + '-'))
+                  .map((c) => {
+                    const m = c.match(/-(\d+)$/)
+                    return m ? Number(m[1]) : 0
+                  })
+                const nextNum = nums.length ? Math.max(...nums) + 1 : 1
+                return `${prefix}-${nextNum}`
+              } catch (e) {
+                return 'LMX-1'
+              }
+            }}
             initialData={editingBook}
           />
         )}

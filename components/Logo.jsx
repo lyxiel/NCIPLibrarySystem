@@ -11,8 +11,8 @@ export default function Logo({ large = false }) {
     <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
       <div className={containerClass}>
         <Image
-          src="/Logo/HeaderSVG-2 (1).svg"
-          alt="NCIP Logo"
+          src="/Logo/ncip-office-logo.png"
+          alt="NCIP Office on Policy, Planning & Research"
           fill
           className="object-contain"
           priority
