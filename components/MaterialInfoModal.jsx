@@ -1,19 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
-
-const getClassification = (resourceType) => {
-  if (!resourceType) return 'Unclassified'
-  const t = String(resourceType).toLowerCase()
-  if (t.includes('book') || t.includes('monograph')) return 'Monograph'
-  if (t.includes('article') || t.includes('journal')) return 'Article'
-  if (t.includes('thesis') || t.includes('dissertation')) return 'Thesis'
-  if (t.includes('audio') || t.includes('recording') || t.includes('sound')) return 'Audio'
-  if (t.includes('video') || t.includes('film') || t.includes('dvd')) return 'Video'
-  if (t.includes('report')) return 'Report'
-  if (t.includes('iksp') || t.includes('cl') || t.includes('archive')) return 'IKSP/CL'
-  return 'Unclassified'
-}
+import { classify } from '@/lib/resourceTypes'
 
 export default function MaterialInfoModal({ isOpen, onClose, book, onBorrow, userRole }) {
   if (!isOpen || !book) return null
@@ -40,7 +28,7 @@ export default function MaterialInfoModal({ isOpen, onClose, book, onBorrow, use
             )}
             <p className="text-sm text-muted-foreground mb-2"><strong>Code:</strong> {book.code}</p>
             <p className="text-sm text-muted-foreground mb-2"><strong>Resource Type:</strong> {book.resourceType}</p>
-                <p className="text-sm text-muted-foreground mb-2"><strong>Classification:</strong> {getClassification(book.resourceType)}</p>
+                <p className="text-sm text-muted-foreground mb-2"><strong>Classification:</strong> {classify(book.resourceType)}</p>
             <p className="text-sm text-muted-foreground mb-2"><strong>Publisher:</strong> {book.publisher}</p>
             <p className="text-sm text-muted-foreground mb-2"><strong>Subject:</strong> {book.subject}</p>
             <p className="text-sm text-muted-foreground mb-2"><strong>Date Published:</strong> {book.datePublished}</p>

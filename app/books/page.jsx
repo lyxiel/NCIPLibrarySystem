@@ -9,6 +9,7 @@ import StatusBadge from '@/components/StatusBadge'
 import BookModal from '@/components/BookModal'
 import MaterialInfoModal from '@/components/MaterialInfoModal'
 import { db } from '@/lib/firebase'
+import { classify, classificationCategories as defaultCategories } from '@/lib/resourceTypes'
 import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { storage } from '@/lib/firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
@@ -40,16 +41,7 @@ export default function BooksPage() {
 
   const [selectedCategory, setSelectedCategory] = useState('')
 
-  const classificationCategories = [
-    'Monograph',
-    'Article',
-    'Thesis',
-    'Audio',
-    'Video',
-    'Report',
-    'IKSP/CL',
-    'Unclassified',
-  ];
+  const classificationCategories = [...defaultCategories, 'Unclassified']
   useEffect(() => {
     try {
       const action = searchParams?.get('action')
@@ -99,18 +91,7 @@ export default function BooksPage() {
     fetchBooks()
   }, [])
 
-  const getClassification = (resourceType) => {
-    if (!resourceType) return 'Unclassified';
-    const t = String(resourceType).toLowerCase();
-    if (t.includes('book') || t.includes('monograph')) return 'Monograph';
-    if (t.includes('article') || t.includes('journal')) return 'Article';
-    if (t.includes('thesis') || t.includes('dissertation')) return 'Thesis';
-    if (t.includes('audio') || t.includes('sound') || t.includes('recording')) return 'Audio';
-    if (t.includes('video') || t.includes('film') || t.includes('dvd')) return 'Video';
-    if (t.includes('report')) return 'Report';
-    if (t.includes('iksp') || t.includes('cl')) return 'IKSP/CL';
-    return 'Unclassified';
-  }
+  const getClassification = (resourceType) => classify(resourceType)
 
   const filteredBooks = books.filter((book) => {
     const matchesSearch =

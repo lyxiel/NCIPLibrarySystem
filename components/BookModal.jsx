@@ -1,7 +1,8 @@
-'use client'
+ 'use client'
 
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
+import { resourceTypes } from '@/lib/resourceTypes'
 
 const BookModal = ({ isOpen, onClose, onSubmit, initialData, suggestCode }) => {
   const defaultForm = {
@@ -126,19 +127,9 @@ const BookModal = ({ isOpen, onClose, onSubmit, initialData, suggestCode }) => {
               required
             >
               <option value="">Select resource type</option>
-              <option>Book</option>
-              <option>Article</option>
-              <option>Report</option>
-              <option>Thesis</option>
-              <option>Electronic Resources</option>
-              <option>Magazine</option>
-              <option>Compilation</option>
-              <option>Brochure / Flyer</option>
-              <option>Case Study</option>
-              <option>Research Paper</option>
-              <option>Newspaper</option>
-              <option>Printed Powerpoint</option>
-              <option>Module</option>
+              {resourceTypes.map((rt) => (
+                <option key={rt} value={rt}>{rt}</option>
+              ))}
             </select>
           </div>
 
