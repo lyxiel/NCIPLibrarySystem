@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
 import { mockBooks, mockActivityLog } from '@/lib/mockData'
+import { db, auth } from '@/lib/firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
+import { toast } from '@/hooks/use-toast'
 
 export default function ReportsPage() {
   const router = useRouter()
@@ -24,6 +28,14 @@ export default function ReportsPage() {
       return
     }
   }, [router])
+
+  useEffect(() => {
+    // Ensure auth state is available; prefer server-side user
+    const unsub = onAuthStateChanged(auth, (user) => {
+      // nothing else needed here, just ensure auth listener is active
+    })
+    return () => unsub()
+  }, [])
 
   const downloadCSV = (rows = [], filename = 'report.csv') => {
     if (!rows || rows.length === 0) return
@@ -97,6 +109,28 @@ export default function ReportsPage() {
     }).map(a => ({ action: a.action, description: a.description, timestamp: a.timestamp }))
     setReportName(`Real-time Report (${startDate} → ${endDate})`)
     setResultRows(activities)
+  }
+
+  const saveReport = async () => {
+    if (!resultRows || !resultRows.length) {
+      alert('No report data to save')
+      return
+    }
+
+    try {
+      const data = {
+        name: reportName || 'Ad-hoc Report',
+        startDate: startDate || null,
+        endDate: endDate || null,
+        rows: resultRows,
+        createdAt: serverTimestamp(),
+      }
+      await addDoc(collection(db, 'reports'), data)
+      try { toast({ title: 'Report saved', description: 'Report stored in Firestore.' }) } catch (e) {}
+    } catch (err) {
+      console.error('Error saving report:', err)
+      alert('Failed to save report. Check console for details.')
+    }
   }
 
   return (
