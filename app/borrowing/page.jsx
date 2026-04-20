@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { db, auth } from '@/lib/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { collection, getDocs, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore'
+import { toast } from '@/hooks/use-toast'
 import AppLayout from '@/components/AppLayout'
 import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
@@ -11,36 +15,71 @@ import { Plus, RotateCw, Search } from 'lucide-react'
 
 export default function BorrowingPage() {
   const router = useRouter()
-  const [borrowings, setBorrowings] = useState(mockBorrowingHistory)
+  const [borrowings, setBorrowings] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [isBorrowModalOpen, setIsBorrowModalOpen] = useState(false)
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false)
   const [userRole, setUserRole] = useState('user')
-  const [currentUserId, setCurrentUserId] = useState(1) // Mock current user ID
+  const [currentUserId, setCurrentUserId] = useState(null) // current user id (uid or member id)
+  const [members, setMembers] = useState([])
+  const [books, setBooks] = useState([])
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn')
-    if (!isLoggedIn) {
-      router.push('/login')
-      return
-    }
-    const role = localStorage.getItem('userRole') || 'user'
-    setUserRole(role)
-    // For users, they see their own borrowings (mocked as user ID 1)
-    if (role === 'user') {
-      setCurrentUserId(1)
-    }
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      // set current user id (use uid)
+      setCurrentUserId(user.uid)
+
+      // determine role from localStorage as fallback
+      const role = localStorage.getItem('userRole') || 'user'
+      setUserRole(role)
+
+      // fetch borrowings, members, books from Firestore
+      try {
+        const bSnap = await getDocs(collection(db, 'borrowings'))
+        const fbBorrowings = bSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        setBorrowings(fbBorrowings)
+      } catch (err) {
+        console.error('Error fetching borrowings:', err)
+        setBorrowings(mockBorrowingHistory)
+      }
+
+      try {
+        const mSnap = await getDocs(collection(db, 'members'))
+        const fbMembers = mSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        setMembers(fbMembers.length ? fbMembers : mockMembers)
+      } catch (err) {
+        console.error('Error fetching members:', err)
+        setMembers(mockMembers)
+      }
+
+      try {
+        const bkSnap = await getDocs(collection(db, 'books'))
+        const fbBooks = bkSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        setBooks(fbBooks.length ? fbBooks : mockBooks)
+      } catch (err) {
+        console.error('Error fetching books:', err)
+        setBooks(mockBooks)
+      }
+    })
+
+    return () => unsub()
   }, [router])
 
   const getMemberName = (memberId) => {
-    const member = mockMembers.find((m) => m.id === memberId)
-    return member ? member.name : 'Unknown Member'
+    if (!memberId) return 'Unknown Member'
+    const member = members.find((m) => String(m.id) === String(memberId))
+    return member ? member.name : (mockMembers.find((m) => String(m.id) === String(memberId))?.name || 'Unknown Member')
   }
 
   const getBookTitle = (bookId) => {
-    const book = mockBooks.find((b) => b.id === bookId)
-    return book ? book.title : 'Unknown Book'
+    if (!bookId) return 'Unknown Book'
+    const book = books.find((b) => String(b.id) === String(bookId))
+    return book ? book.title : (mockBooks.find((b) => String(b.id) === String(bookId))?.title || 'Unknown Book')
   }
 
   const filteredBorrowings = borrowings.filter((borrowing) => {
@@ -59,33 +98,73 @@ export default function BorrowingPage() {
     return matchesSearch && matchesStatus && isOwnBorrowing
   })
 
-  const handleBorrowBook = (formData) => {
-    const newBorrowing = {
-      id: Math.max(...borrowings.map((b) => b.id), 0) + 1,
-      memberId: parseInt(formData.memberId),
-      bookId: parseInt(formData.bookId),
-      borrowDate: new Date().toISOString().split('T')[0],
-      dueDate: formData.dueDate,
-      returnDate: null,
-      status: 'Active',
+  const handleBorrowBook = async (formData) => {
+    try {
+      const dataToSave = {
+        memberId: String(formData.memberId),
+        bookId: String(formData.bookId),
+        borrowDate: new Date().toISOString().split('T')[0],
+        dueDate: formData.dueDate,
+        returnDate: null,
+        status: 'Active',
+        createdAt: serverTimestamp(),
+      }
+      const r = await addDoc(collection(db, 'borrowings'), dataToSave)
+      const newBorrowing = { id: r.id, ...dataToSave }
+      setBorrowings((prev) => [...prev, newBorrowing])
+
+      // attempt to mark the book as Borrowed
+      try {
+        const bookRef = doc(db, 'books', String(formData.bookId))
+        await updateDoc(bookRef, { status: 'Borrowed' })
+        setBooks((prev) => prev.map(b => String(b.id) === String(formData.bookId) ? { ...b, status: 'Borrowed' } : b))
+      } catch (e) {
+        // ignore if update fails
+      }
+
+      setIsBorrowModalOpen(false)
+      try { toast({ title: 'Borrowing recorded' }) } catch (e) {}
+    } catch (err) {
+      console.error('Error creating borrowing:', err)
+      alert('Failed to record borrowing. Check console for details.')
     }
-    setBorrowings([...borrowings, newBorrowing])
-    setIsBorrowModalOpen(false)
   }
 
-  const handleReturnBook = (borrowingId) => {
-    setBorrowings(
-      borrowings.map((borrowing) =>
-        borrowing.id === borrowingId
-          ? {
-              ...borrowing,
-              returnDate: new Date().toISOString().split('T')[0],
-              status: 'Returned',
-            }
-          : borrowing
+  const handleReturnBook = async (borrowingId) => {
+    try {
+      // update Firestore if id looks like a string doc id
+      const returnDate = new Date().toISOString().split('T')[0]
+      try {
+        const bRef = doc(db, 'borrowings', String(borrowingId))
+        await updateDoc(bRef, { returnDate, status: 'Returned' })
+      } catch (e) {
+        // ignore
+      }
+
+      // update local state
+      const borrowing = borrowings.find(b => String(b.id) === String(borrowingId))
+      if (borrowing) {
+        // attempt to set book status back to Available
+        try {
+          const bookRef = doc(db, 'books', String(borrowing.bookId))
+          await updateDoc(bookRef, { status: 'Available' })
+          setBooks((prev) => prev.map(b => String(b.id) === String(borrowing.bookId) ? { ...b, status: 'Available' } : b))
+        } catch (e) {}
+      }
+
+      setBorrowings(
+        borrowings.map((borrowing) =>
+          String(borrowing.id) === String(borrowingId)
+            ? { ...borrowing, returnDate, status: 'Returned' }
+            : borrowing
+        )
       )
-    )
-    setIsReturnModalOpen(false)
+      setIsReturnModalOpen(false)
+      try { toast({ title: 'Return processed' }) } catch (e) {}
+    } catch (err) {
+      console.error('Error processing return:', err)
+      alert('Failed to process return. Check console for details.')
+    }
   }
 
   const columns = userRole === 'user' 
