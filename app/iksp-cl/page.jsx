@@ -8,6 +8,10 @@ import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import MaterialModal from '@/components/MaterialModal'
 import { Plus, Search, Edit, Trash2, Lock, CheckCircle, AlertCircle, FileUp, Check } from 'lucide-react'
+import { db, auth } from '@/lib/firebase'
+import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
+import { toast } from '@/hooks/use-toast'
 
 export default function IKSPCLPage() {
   const router = useRouter()
@@ -15,107 +19,50 @@ export default function IKSPCLPage() {
   const [editingMaterial, setEditingMaterial] = useState(null)
   const [userRole, setUserRole] = useState('user')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [materials, setMaterials] = useState([
-    {
-      id: 1,
-      codeNumber: 'IKSP-001',
-      availability: 'Hardcopy',
-      region: 'Region IV-A',
-      province: 'Laguna',
-      municipality: 'Paete',
-      barangay: 'Tinanggap',
-      group: 'Batak',
-      title: 'Traditional Weaving Techniques',
-      type: 'Document',
-      copies: 3,
-      lastUpdated: '2024-03-15',
-      subject: 'Traditional Arts, Crafts',
-      remarks: 'Well-preserved document',
-      sensitivity: 'Public',
-      fpicRequired: false,
-    },
-    {
-      id: 2,
-      codeNumber: 'IKSP-002',
-      availability: 'Softcopy',
-      region: 'Region XI',
-      province: 'Davao del Sur',
-      municipality: 'Malita',
-      barangay: 'Baliangao',
-      group: 'T\'boli',
-      title: 'Sacred Rituals and Ceremonies',
-      type: 'Audio Recording',
-      copies: 2,
-      lastUpdated: '2024-02-28',
-      subject: 'Spiritual Practices, Rituals',
-      remarks: 'Digital copy available',
-      sensitivity: 'Sacred',
-      fpicRequired: true,
-    },
-    {
-      id: 3,
-      codeNumber: 'IKSP-003',
-      availability: 'Both',
-      region: 'Region I',
-      province: 'Pangasinan',
-      municipality: 'Bolinao',
-      barangay: 'Balingasay',
-      group: 'Pangasinan',
-      title: 'Agricultural Knowledge Systems',
-      type: 'Video',
-      copies: 1,
-      lastUpdated: '2024-01-20',
-      subject: 'Agriculture, Traditional Methods',
-      remarks: 'Recently digitized',
-      sensitivity: 'Public',
-      fpicRequired: false,
-    },
-    {
-      id: 4,
-      codeNumber: 'IKSP-004',
-      availability: 'Hardcopy',
-      region: 'Region VIII',
-      province: 'Leyte',
-      municipality: 'Baybay',
-      barangay: 'Cambatog',
-      group: 'Waray-Waray',
-      title: 'Medicinal Plants and Healing',
-      type: 'Manuscript',
-      copies: 2,
-      lastUpdated: '2024-02-10',
-      subject: 'Medicinal Plants, Traditional Medicine',
-      remarks: 'Requires preservation',
-      sensitivity: 'Restricted',
-      fpicRequired: true,
-    },
-    {
-      id: 5,
-      codeNumber: 'IKSP-005',
-      availability: 'Both',
-      region: 'Region VI',
-      province: 'Capiz',
-      municipality: 'Panay',
-      barangay: 'Passi',
-      group: 'Panay Bukidnon',
-      title: 'Oral Legends and Folk Stories',
-      type: 'Transcription',
-      copies: 4,
-      lastUpdated: '2024-03-01',
-      subject: 'Oral Traditions, Cultural Heritage',
-      remarks: 'Complete collection',
-      sensitivity: 'Public',
-      fpicRequired: false,
-    },
-  ])
+  const [materials, setMaterials] = useState([])
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('')
 
   useEffect(() => {
-    const role = localStorage.getItem('userRole') || 'user'
-    const loggedIn = !!localStorage.getItem('isLoggedIn')
-    setUserRole(role)
-    setIsLoggedIn(loggedIn)
+    // Prefer server-side user role when possible
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setIsLoggedIn(true)
+        try {
+          const userDocRef = doc(db, 'users', user.uid)
+          const userSnap = await getDoc(userDocRef)
+          if (userSnap.exists()) {
+            setUserRole(userSnap.data().role || 'user')
+            localStorage.setItem('userRole', userSnap.data().role || 'user')
+          } else {
+            const role = localStorage.getItem('userRole') || 'user'
+            setUserRole(role)
+          }
+        } catch (e) {
+          const role = localStorage.getItem('userRole') || 'user'
+          setUserRole(role)
+        }
+      } else {
+        setIsLoggedIn(false)
+        setUserRole('user')
+      }
+    })
+
+    // Fetch materials from Firestore
+    const fetchMaterials = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'iksp-cl'))
+        const fbMaterials = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        setMaterials(fbMaterials)
+      } catch (err) {
+        console.error('Error fetching IKSP materials:', err)
+      }
+    }
+
+    fetchMaterials()
+
+    return () => unsub()
   }, [])
 
   const filteredMaterials = materials.filter((material) => {
@@ -139,22 +86,49 @@ export default function IKSPCLPage() {
     return matchesSearch && matchesType
   })
 
-  const handleAddMaterial = (formData) => {
+  const handleAddMaterial = async (formData) => {
+    // Editing existing material
     if (editingMaterial) {
-      setMaterials(
-        materials.map((material) =>
-          material.id === editingMaterial.id ? { ...formData, id: editingMaterial.id } : material
+      try {
+        if (editingMaterial.id) {
+          const matRef = doc(db, 'iksp-cl', String(editingMaterial.id))
+          const dataToUpdate = { ...formData }
+          dataToUpdate.copies = Number(dataToUpdate.copies) || 0
+          await updateDoc(matRef, dataToUpdate)
+        }
+
+        setMaterials(
+          materials.map((material) =>
+            material.id === editingMaterial.id ? { ...formData, id: editingMaterial.id } : material
+          )
         )
-      )
-      setEditingMaterial(null)
-    } else {
-      const newMaterial = {
-        ...formData,
-        id: Math.max(...materials.map((m) => m.id), 0) + 1,
+        setEditingMaterial(null)
+        setIsModalOpen(false)
+        try { toast({ title: 'Material updated', description: `${formData.title || 'Material'} updated.` }) } catch (e) {}
+        return
+      } catch (err) {
+        console.error('Error updating material:', err)
+        alert('Failed to update material. Check console for details.')
+        return
       }
-      setMaterials([...materials, newMaterial])
     }
-    setIsModalOpen(false)
+
+    // Creating new material
+    try {
+      const dataToSave = { ...formData }
+      dataToSave.copies = Number(dataToSave.copies) || 0
+      dataToSave.lastUpdated = dataToSave.lastUpdated || new Date().toISOString().split('T')[0]
+      dataToSave.createdAt = serverTimestamp()
+
+      const docRef = await addDoc(collection(db, 'iksp-cl'), dataToSave)
+      const newMaterial = { ...dataToSave, id: docRef.id }
+      setMaterials((prev) => [...prev, newMaterial])
+      setIsModalOpen(false)
+      try { toast({ title: 'Material added', description: `${formData.title || 'Material'} added.` }) } catch (e) {}
+    } catch (err) {
+      console.error('Error saving material:', err)
+      alert('Failed to save material. Check console for details.')
+    }
   }
 
   const handleEditMaterial = (material) => {
@@ -162,9 +136,19 @@ export default function IKSPCLPage() {
     setIsModalOpen(true)
   }
 
-  const handleDeleteMaterial = (materialId) => {
-    if (confirm('Are you sure you want to delete this material?')) {
+  const handleDeleteMaterial = async (materialId) => {
+    if (!confirm('Are you sure you want to delete this material?')) return
+
+    try {
+      // If materialId is a Firestore id (string), attempt delete on server
+      if (typeof materialId === 'string') {
+        await deleteDoc(doc(db, 'iksp-cl', String(materialId)))
+      }
       setMaterials(materials.filter((material) => material.id !== materialId))
+      try { toast({ title: 'Material deleted', description: 'Material removed.', variant: 'destructive' }) } catch (e) {}
+    } catch (err) {
+      console.error('Error deleting material:', err)
+      alert('Failed to delete material. Check console for details.')
     }
   }
 
@@ -173,7 +157,7 @@ export default function IKSPCLPage() {
     if (!file) return
 
     const reader = new FileReader()
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const text = String(event.target?.result || '')
         const lines = text.split('\n')
@@ -202,8 +186,21 @@ export default function IKSPCLPage() {
             }
           })
         
-        setMaterials([...materials, ...newMaterials])
-        alert(`Successfully imported ${newMaterials.length} materials from CSV`)
+        // Save each imported material to Firestore and local state
+        try {
+          const added = []
+          for (const m of newMaterials) {
+            const dataToSave = { ...m }
+            dataToSave.createdAt = serverTimestamp()
+            const r = await addDoc(collection(db, 'iksp-cl'), dataToSave)
+            added.push({ ...dataToSave, id: r.id })
+          }
+          setMaterials((prev) => [...prev, ...added])
+          alert(`Successfully imported ${added.length} materials from CSV`)
+        } catch (err) {
+          console.error('Error importing CSV to Firestore:', err)
+          alert('Imported to local state failed. Check console for details.')
+        }
       } catch (error) {
         alert('Error importing CSV: ' + (error instanceof Error ? error.message : 'Unknown error'))
       }

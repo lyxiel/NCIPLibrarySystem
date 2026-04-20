@@ -8,9 +8,10 @@ import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import BookModal from '@/components/BookModal'
 import MaterialInfoModal from '@/components/MaterialInfoModal'
-import { db } from '@/lib/firebase'
+import { db, auth } from '@/lib/firebase'
 import { classify, classificationCategories as defaultCategories } from '@/lib/resourceTypes'
-import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
 import { storage } from '@/lib/firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { Plus, Search, Edit, Trash2, Grid3x3, List, BookOpen, FileUp, Check } from 'lucide-react'
@@ -33,10 +34,32 @@ export default function BooksPage() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const role = localStorage.getItem('userRole') || 'user'
-    const loggedIn = !!localStorage.getItem('isLoggedIn')
-    setUserRole(role)
-    setIsLoggedIn(loggedIn)
+    // Listen to Firebase auth state so we can reliably determine role (prefers server truth over localStorage)
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setIsLoggedIn(true)
+        try {
+          const userDocRef = doc(db, 'users', user.uid)
+          const userSnap = await getDoc(userDocRef)
+          if (userSnap.exists()) {
+            setUserRole(userSnap.data().role || 'user')
+            localStorage.setItem('userRole', userSnap.data().role || 'user')
+          } else {
+            // fallback to any saved local role
+            const role = localStorage.getItem('userRole') || 'user'
+            setUserRole(role)
+          }
+        } catch (e) {
+          const role = localStorage.getItem('userRole') || 'user'
+          setUserRole(role)
+        }
+      } else {
+        setIsLoggedIn(false)
+        setUserRole('user')
+      }
+    })
+
+    return () => unsub()
   }, [])
 
   const [selectedCategory, setSelectedCategory] = useState('')
