@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { db, auth } from '@/lib/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { toast } from '@/hooks/use-toast'
 import AppLayout from '@/components/AppLayout'
 import {
   Settings,
@@ -39,18 +43,52 @@ export default function SettingsPage() {
   const [theme, setTheme] = useState('light')
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn')
-    if (!isLoggedIn) {
-      router.push('/login')
-    }
-    
-    const savedSettings = localStorage.getItem('userSettings')
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings))
-    }
-    const t = localStorage.getItem('theme') || 'light'
-    setTheme(t)
-    setSettings((prev) => ({ ...prev, darkMode: t === 'navy' }))
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      // Try to load settings from Firestore user doc; fallback to localStorage/mocks
+      try {
+        const userRef = doc(db, 'users', user.uid)
+        const snap = await getDoc(userRef)
+        if (snap.exists()) {
+          const data = snap.data()
+          // map Firestore fields to settings shape
+          const loaded = {
+            fullName: data.name || data.fullName || 'John Doe',
+            email: data.email || 'john@example.com',
+            phoneNumber: data.phone || data.phoneNumber || '+63 123 456 7890',
+            libraryCardNumber: data.libraryCardNumber || 'LCS-2024-001',
+            notificationsEnabled: data.notificationsEnabled ?? true,
+            emailNotifications: data.emailNotifications ?? true,
+            darkMode: data.darkMode ?? false,
+            language: data.language || 'English',
+            profileImage: data.profileImage || null,
+          }
+          setSettings(loaded)
+          const t = loaded.darkMode ? 'navy' : 'light'
+          setTheme(t)
+        } else {
+          // no user doc yet: try localStorage then defaults
+          const savedSettings = localStorage.getItem('userSettings')
+          if (savedSettings) setSettings(JSON.parse(savedSettings))
+          const t = localStorage.getItem('theme') || 'light'
+          setTheme(t)
+          setSettings((prev) => ({ ...prev, darkMode: t === 'navy' }))
+        }
+      } catch (err) {
+        console.error('Error loading user settings from Firestore:', err)
+        const savedSettings = localStorage.getItem('userSettings')
+        if (savedSettings) setSettings(JSON.parse(savedSettings))
+        const t = localStorage.getItem('theme') || 'light'
+        setTheme(t)
+        setSettings((prev) => ({ ...prev, darkMode: t === 'navy' }))
+      }
+    })
+
+    return () => unsub()
   }, [router])
 
   const handleInputChange = (key, value) => {
@@ -76,10 +114,35 @@ export default function SettingsPage() {
     handleInputChange('profileImage', null)
   }
 
-  const handleSaveSettings = () => {
-    localStorage.setItem('userSettings', JSON.stringify(settings))
-    setIsSaved(true)
-    setTimeout(() => setIsSaved(false), 2000)
+  const handleSaveSettings = async () => {
+    try {
+      const user = auth.currentUser
+      if (!user) {
+        alert('You must be signed in to save settings')
+        return
+      }
+
+      const dataToSave = {
+        name: settings.fullName,
+        email: settings.email,
+        phone: settings.phoneNumber,
+        libraryCardNumber: settings.libraryCardNumber,
+        notificationsEnabled: settings.notificationsEnabled,
+        emailNotifications: settings.emailNotifications,
+        darkMode: settings.darkMode,
+        language: settings.language,
+        profileImage: settings.profileImage,
+        updatedAt: new Date().toISOString(),
+      }
+
+      await setDoc(doc(db, 'users', user.uid), dataToSave, { merge: true })
+      try { toast({ title: 'Settings saved', description: 'Your settings have been saved.' }) } catch (e) {}
+      setIsSaved(true)
+      setTimeout(() => setIsSaved(false), 2000)
+    } catch (err) {
+      console.error('Error saving settings to Firestore:', err)
+      alert('Failed to save settings. Check console for details.')
+    }
   }
 
   const tabs = [
