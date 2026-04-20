@@ -7,10 +7,14 @@ import Table from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import { mockMembers } from '@/lib/mockData'
 import { Search, Plus, Edit, Trash2 } from 'lucide-react'
+import { db, auth } from '@/lib/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
+import { toast } from '@/hooks/use-toast'
 
 export default function MembersPage() {
   const router = useRouter()
-  const [members, setMembers] = useState(mockMembers)
+  const [members, setMembers] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -23,21 +27,32 @@ export default function MembersPage() {
   })
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn')
-    const role = localStorage.getItem('userRole')
-    
-    if (!isLoggedIn) {
-      router.push('/login')
-      return
-    }
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
-    setUserRole(role || 'user')
+      const role = localStorage.getItem('userRole') || 'user'
+      setUserRole(role)
 
-    // Only STAFF can access this page
-    if (role !== 'admin' && role !== 'staff') {
-      router.push('/dashboard')
-      return
-    }
+      if (role !== 'admin' && role !== 'staff') {
+        router.push('/dashboard')
+        return
+      }
+
+      // fetch members from Firestore
+      try {
+        const snap = await getDocs(collection(db, 'members'))
+        const fb = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        setMembers(fb.length ? fb : mockMembers)
+      } catch (err) {
+        console.error('Error fetching members:', err)
+        setMembers(mockMembers)
+      }
+    })
+
+    return () => unsub()
   }, [router])
 
   const filteredMembers = members.filter((member) => {
@@ -50,27 +65,41 @@ export default function MembersPage() {
     return matchesSearch && matchesType
   })
 
-  const handleAddMember = (e) => {
+  const handleAddMember = async (e) => {
     e.preventDefault()
-    if (editingMember) {
-      setMembers(
-        members.map((member) =>
-          member.id === editingMember.id ? { ...member, ...formData } : member
+    try {
+      if (editingMember) {
+        // update Firestore doc if id is string
+        if (editingMember.id) {
+          const mRef = doc(db, 'members', String(editingMember.id))
+          await updateDoc(mRef, { ...formData })
+        }
+        setMembers(
+          members.map((member) =>
+            member.id === editingMember.id ? { ...member, ...formData } : member
+          )
         )
-      )
-      setEditingMember(null)
-    } else {
-      const newMember = {
-        ...formData,
-        id: Math.max(...members.map((m) => m.id), 0) + 1,
-        joinDate: new Date().toISOString().split('T')[0],
-        booksCheckedOut: 0,
-        status: 'Active',
+        setEditingMember(null)
+        try { toast({ title: 'Member updated' }) } catch (e) {}
+      } else {
+        const dataToSave = {
+          ...formData,
+          joinDate: new Date().toISOString().split('T')[0],
+          booksCheckedOut: 0,
+          status: 'Active',
+          createdAt: serverTimestamp(),
+        }
+        const r = await addDoc(collection(db, 'members'), dataToSave)
+        setMembers([...members, { id: r.id, ...dataToSave }])
+        try { toast({ title: 'Member added' }) } catch (e) {}
       }
-      setMembers([...members, newMember])
+
+      setFormData({ name: '', email: '', type: 'Researcher' })
+      setIsModalOpen(false)
+    } catch (err) {
+      console.error('Error saving member:', err)
+      alert('Failed to save member. Check console for details.')
     }
-    setFormData({ name: '', email: '', type: 'Researcher' })
-    setIsModalOpen(false)
   }
 
   const handleEditMember = (member) => {
@@ -79,9 +108,17 @@ export default function MembersPage() {
     setIsModalOpen(true)
   }
 
-  const handleDeleteMember = (memberId) => {
-    if (confirm('Are you sure you want to delete this member?')) {
+  const handleDeleteMember = async (memberId) => {
+    if (!confirm('Are you sure you want to delete this member?')) return
+    try {
+      if (typeof memberId === 'string') {
+        await deleteDoc(doc(db, 'members', String(memberId)))
+      }
       setMembers(members.filter((member) => member.id !== memberId))
+      try { toast({ title: 'Member deleted', variant: 'destructive' }) } catch (e) {}
+    } catch (err) {
+      console.error('Error deleting member:', err)
+      alert('Failed to delete member. Check console for details.')
     }
   }
 
