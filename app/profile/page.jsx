@@ -2,6 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { db, auth } from '@/lib/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { toast } from '@/hooks/use-toast'
 import AppLayout from '@/components/AppLayout'
 import { mockUsers, mockUserDashboard } from '@/lib/mockData'
 import {
@@ -21,20 +25,65 @@ export default function ProfilePage() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState(mockUsers[1]) // Default to regular user
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem('isLoggedIn')
-    if (!loggedIn) {
-      router.push('/login')
-    } else {
-      setIsLoggedIn(true)
-      // In real app, fetch actual user data from backend
-      const userRole = localStorage.getItem('userRole')
-      if (userRole === 'admin') {
-        setCurrentUser(mockUsers[0])
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push('/login')
+        return
       }
-    }
+      setIsLoggedIn(true)
+      try {
+        const userRef = doc(db, 'users', user.uid)
+        const snap = await getDoc(userRef)
+        if (snap.exists()) {
+          setCurrentUser({ id: user.uid, ...snap.data() })
+        } else {
+          // create minimal user doc from auth info
+          const minimal = {
+            name: user.displayName || mockUsers[1].name,
+            email: user.email || mockUsers[1].email,
+            phone: mockUsers[1].phone,
+            department: mockUsers[1].department,
+            joinDate: mockUsers[1].joinDate,
+            role: 'user',
+            status: 'Active',
+          }
+          await setDoc(userRef, minimal, { merge: true })
+          setCurrentUser({ id: user.uid, ...minimal })
+        }
+      } catch (err) {
+        console.error('Error loading user profile:', err)
+        // fallback to local mock
+        const role = localStorage.getItem('userRole')
+        if (role === 'admin') setCurrentUser(mockUsers[0])
+        setIsLoggedIn(true)
+      }
+    })
+
+    return () => unsub()
   }, [router])
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setCurrentUser((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSave = async () => {
+    if (!currentUser?.id) return
+    try {
+      const userRef = doc(db, 'users', currentUser.id)
+      const dataToSave = { ...currentUser }
+      delete dataToSave.id
+      await setDoc(userRef, dataToSave, { merge: true })
+      setEditing(false)
+      try { toast({ title: 'Profile saved', description: 'Your profile was updated.' }) } catch (e) {}
+    } catch (err) {
+      console.error('Error saving profile:', err)
+      alert('Failed to save profile. Check console for details.')
+    }
+  }
 
   if (!isLoggedIn) return null
 
@@ -56,8 +105,31 @@ export default function ProfilePage() {
 
             {/* User Info Section */}
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-foreground mb-2">{currentUser.name}</h1>
-              <p className="text-lg text-muted-foreground mb-4">{currentUser.role}</p>
+                <div className="flex items-start gap-4">
+                  <div className="flex-1">
+                    {editing ? (
+                      <div>
+                        <input name="name" value={currentUser.name || ''} onChange={handleChange} className="text-3xl font-bold text-foreground mb-2 w-full bg-transparent border-b pb-1" />
+                        <input name="role" value={currentUser.role || ''} onChange={handleChange} className="text-lg text-muted-foreground mb-4 w-full bg-transparent border-b pb-1" />
+                      </div>
+                    ) : (
+                      <div>
+                        <h1 className="text-3xl font-bold text-foreground mb-2">{currentUser.name}</h1>
+                        <p className="text-lg text-muted-foreground mb-4">{currentUser.role}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {editing ? (
+                      <>
+                        <button onClick={handleSave} className="px-3 py-1 rounded-lg bg-primary text-white">Save</button>
+                        <button onClick={() => setEditing(false)} className="px-3 py-1 rounded-lg border">Cancel</button>
+                      </>
+                    ) : (
+                      <button onClick={() => setEditing(true)} className="px-3 py-1 rounded-lg border">Edit Profile</button>
+                    )}
+                  </div>
+                </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
                   <Mail size={18} className="text-primary" />
