@@ -20,21 +20,117 @@ import {
   BarChart3,
 } from 'lucide-react'
 import { mockDashboardStats, mockActivityLog } from '@/lib/mockData'
+import { db, auth } from '@/lib/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { doc, getDoc, setDoc, collection, getDocs, addDoc, serverTimestamp, deleteDoc } from 'firebase/firestore'
+import { toast } from '@/hooks/use-toast'
 
 export default function DashboardPage() {
   const router = useRouter()
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [userRole, setUserRole] = useState('user')
+  const [stats, setStats] = useState(mockDashboardStats)
+  const [activities, setActivities] = useState(mockActivityLog)
+  const [editingStats, setEditingStats] = useState(false)
+  const [statsForm, setStatsForm] = useState(mockDashboardStats)
+  const [newActivity, setNewActivity] = useState({ action: '', description: '', type: 'borrow' })
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn')
-    const role = localStorage.getItem('userRole')
-    if (!isLoggedIn) {
-      router.push('/login')
-      return
-    }
-    setUserRole(role || 'user')
+    // Use Firebase auth to determine role and load data
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      // load role from users doc if available
+      try {
+        const userRef = doc(db, 'users', user.uid)
+        const uSnap = await getDoc(userRef)
+        const role = uSnap.exists() ? (uSnap.data().role || localStorage.getItem('userRole') || 'user') : (localStorage.getItem('userRole') || 'user')
+        setUserRole(role)
+      } catch (err) {
+        setUserRole(localStorage.getItem('userRole') || 'user')
+      }
+
+      // fetch dashboard stats and activity log from Firestore
+      try {
+        const statsRef = doc(db, 'dashboard', 'stats')
+        const sSnap = await getDoc(statsRef)
+        if (sSnap.exists()) {
+          setStats(sSnap.data())
+          setStatsForm(sSnap.data())
+        } else {
+          // initialize from mock if absent
+          await setDoc(statsRef, mockDashboardStats)
+          setStats(mockDashboardStats)
+          setStatsForm(mockDashboardStats)
+        }
+      } catch (err) {
+        console.error('Error loading dashboard stats:', err)
+        setStats(mockDashboardStats)
+        setStatsForm(mockDashboardStats)
+      }
+
+      try {
+        const snap = await getDocs(collection(db, 'activity-log'))
+        const items = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b)=> (b.timestamp||'').localeCompare(a.timestamp||''))
+        setActivities(items.length ? items : mockActivityLog)
+      } catch (err) {
+        console.error('Error loading activity log:', err)
+        setActivities(mockActivityLog)
+      }
+    })
+
+    return () => unsub()
   }, [router])
+
+  const handleStatsChange = (e) => {
+    const { name, value } = e.target
+    setStatsForm((s) => ({ ...s, [name]: Number(value) }))
+  }
+
+  const saveStats = async () => {
+    try {
+      const ref = doc(db, 'dashboard', 'stats')
+      await setDoc(ref, statsForm, { merge: true })
+      setStats(statsForm)
+      setEditingStats(false)
+      try { toast({ title: 'Stats updated' }) } catch (e) {}
+    } catch (err) {
+      console.error('Error saving stats:', err)
+      alert('Failed to save stats. Check console for details.')
+    }
+  }
+
+  const handleNewActivityChange = (e) => {
+    const { name, value } = e.target
+    setNewActivity((n) => ({ ...n, [name]: value }))
+  }
+
+  const addActivity = async () => {
+    try {
+      const data = { ...newActivity, timestamp: new Date().toISOString() }
+      const r = await addDoc(collection(db, 'activity-log'), data)
+      setActivities((prev) => [{ id: r.id, ...data }, ...prev])
+      setNewActivity({ action: '', description: '', type: 'borrow' })
+      try { toast({ title: 'Activity added' }) } catch (e) {}
+    } catch (err) {
+      console.error('Error adding activity:', err)
+      alert('Failed to add activity. Check console for details.')
+    }
+  }
+
+  const deleteActivity = async (id) => {
+    if (!confirm('Delete this activity?')) return
+    try {
+      await deleteDoc(doc(db, 'activity-log', id))
+      setActivities((prev) => prev.filter(a => a.id !== id))
+      try { toast({ title: 'Activity deleted', variant: 'destructive' }) } catch (e) {}
+    } catch (err) {
+      console.error('Error deleting activity:', err)
+      alert('Failed to delete activity. Check console for details.')
+    }
+  }
 
   // Calculate percentages for progress indicators
   const bookUtilization = Math.round((mockDashboardStats.borrowedBooks / mockDashboardStats.totalBooks) * 100)
@@ -115,7 +211,53 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <ActivityLog activities={mockActivityLog} />
+      <div className="card-elevated">
+        <h3 className="font-bold text-foreground mb-4 pb-3 border-b border-border">Dashboard Settings</h3>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setEditingStats((s) => !s)} className="px-3 py-2 rounded-lg bg-secondary text-white">{editingStats ? 'Cancel Edit' : 'Edit Stats'}</button>
+            {editingStats ? (
+              <div className="flex gap-2 items-center">
+                <input name="totalBooks" value={statsForm.totalBooks} onChange={handleStatsChange} className="w-28 px-2 py-1 border rounded" />
+                <input name="availableBooks" value={statsForm.availableBooks} onChange={handleStatsChange} className="w-28 px-2 py-1 border rounded" />
+                <input name="borrowedBooks" value={statsForm.borrowedBooks} onChange={handleStatsChange} className="w-28 px-2 py-1 border rounded" />
+                <input name="reservedBooks" value={statsForm.reservedBooks} onChange={handleStatsChange} className="w-28 px-2 py-1 border rounded" />
+                <input name="activeMembers" value={statsForm.activeMembers} onChange={handleStatsChange} className="w-28 px-2 py-1 border rounded" />
+                <input name="pendingReturns" value={statsForm.pendingReturns} onChange={handleStatsChange} className="w-28 px-2 py-1 border rounded" />
+                <button onClick={saveStats} className="px-3 py-2 rounded-lg bg-primary text-white">Save</button>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">Current stats are editable via the Edit Stats button.</div>
+            )}
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-2">Activity Log Management</h4>
+            <div className="flex gap-2 mb-3">
+              <input name="action" value={newActivity.action} onChange={handleNewActivityChange} placeholder="Action" className="px-2 py-1 border rounded w-32" />
+              <input name="type" value={newActivity.type} onChange={handleNewActivityChange} placeholder="Type" className="px-2 py-1 border rounded w-24" />
+              <input name="description" value={newActivity.description} onChange={handleNewActivityChange} placeholder="Description" className="px-2 py-1 border rounded flex-1" />
+              <button onClick={addActivity} className="px-3 py-1 rounded-lg bg-primary text-white">Add</button>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {activities.map((a) => (
+                <div key={a.id} className="flex items-center justify-between p-2 border rounded">
+                  <div>
+                    <div className="font-medium">{a.action} <span className="text-xs text-muted-foreground">({a.type})</span></div>
+                    <div className="text-xs text-muted-foreground">{a.description}</div>
+                    <div className="text-xs text-muted-foreground">{a.timestamp}</div>
+                  </div>
+                  <div>
+                    <button onClick={() => deleteActivity(a.id)} className="px-2 py-1 text-red-600">Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ActivityLog activities={activities} />
     </>
   )
 
